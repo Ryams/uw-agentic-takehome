@@ -61,10 +61,18 @@ def test_register_system_version_is_idempotent_and_mapped():
 def test_eval_csv_records_version_and_widens_columns(tmp_path):
     p = tmp_path / "results.csv"
     sv = versioning.system_version()
-    records.append_eval_row("run1", 42, "mixed", 10, {"path_accuracy": 0.8}, path=p, sv=sv)
-    records.append_eval_row("run2", 42, "mixed", 10, {"path_accuracy": 0.9, "blocker_recall": 0.7}, path=p, sv=sv)
+    records.append_eval_row("run1", 42, "mixed", 10, {"path_accuracy": 0.8}, path=p, sv=sv, eval_set="seed42")
+    records.append_eval_row("run1", 42, "mixed", 3, {"path_accuracy": 0.5}, path=p, sv=sv, eval_set="seed42",
+                            slice="protocol=roof_class")
+    records.append_eval_row("run2", 42, "mixed", 10, {"path_accuracy": 0.9, "blocker_recall": 0.7}, path=p, sv=sv,
+                            eval_set="seed42")
+    records.append_eval_row("run2", 42, "mixed", 3, {"path_accuracy": 0.9}, path=p, sv=sv, eval_set="seed42",
+                            slice="protocol=roof_class")
     rows = list(csv.DictReader(p.open()))
-    assert [r["eval_run_id"] for r in rows] == ["run1", "run2"]
+    assert [(r["eval_run_id"], r["slice"]) for r in rows] == [
+        ("run1", "overall"), ("run1", "protocol=roof_class"), ("run2", "overall"), ("run2", "protocol=roof_class")]
     assert rows[0]["system_version"] == sv["system_version"] and rows[0]["blocker_recall"] == ""
     assert "leadgen_generator" in json.loads(rows[1]["eval_set_json"])
-    assert "run1" in compare.compare("run1", "run2", path=p) and "+0.100" in compare.compare("run1", "run2", path=p)
+    report = compare.compare("run1", "run2", path=p)
+    assert "Slice overall  (n=10 -> 10)" in report and "+0.100" in report          # per-slice deltas
+    assert "Slice protocol=roof_class  (n=3 -> 3)" in report and "+0.400" in report

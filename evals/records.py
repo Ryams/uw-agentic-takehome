@@ -12,7 +12,7 @@ from typing import Any, Optional
 from uw_agent import versioning
 
 RESULTS_CSV = versioning.ROOT / "evals" / "results.csv"
-BASE_COLUMNS = ["eval_run_id", "timestamp", "system_version", "dirty", "seed", "difficulty", "n_leads"]
+BASE_COLUMNS = ["eval_run_id", "timestamp", "system_version", "dirty", "eval_set", "slice", "seed", "difficulty", "n_leads"]
 TAIL_COLUMNS = ["components_json", "runtime_config_json", "eval_set_json"]
 
 
@@ -22,11 +22,14 @@ def new_eval_run_id() -> str:
 
 def append_eval_row(eval_run_id: str, seed: int, difficulty: str, n_leads: int,
                     metrics: dict[str, Any], runtime_config: Optional[dict[str, Any]] = None,
-                    path: Path = RESULTS_CSV, sv: Optional[dict[str, Any]] = None) -> dict[str, Any]:
-    """Append one row. New metric columns widen the file (existing rows get blanks)."""
+                    path: Path = RESULTS_CSV, sv: Optional[dict[str, Any]] = None,
+                    eval_set: str = "", slice: str = "overall") -> dict[str, Any]:
+    """Append one row per (run, eval set, seed, slice). `slice` is "overall" or "<dimension>=<value>"
+    (e.g. "protocol=roof_class", "failure_mode=conflict", "tier=hard"); `n_leads` is the slice size.
+    New metric columns widen the file (existing rows get blanks)."""
     sv = sv or versioning.system_version()
     eval_set = {
-        "seed": seed, "difficulty": difficulty, "n_leads": n_leads,
+        "set": eval_set, "seed": seed, "difficulty": difficulty, "n_leads": n_leads,
         "leadgen_generator": sv["components"].get("leadgen_generator"),
         "grader": sv["components"].get("grader"),
     }
@@ -34,7 +37,7 @@ def append_eval_row(eval_run_id: str, seed: int, difficulty: str, n_leads: int,
         "eval_run_id": eval_run_id,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "system_version": sv["system_version"], "dirty": int(sv["dirty"]),
-        "seed": seed, "difficulty": difficulty, "n_leads": n_leads,
+        "eval_set": eval_set, "slice": slice, "seed": seed, "difficulty": difficulty, "n_leads": n_leads,
         **metrics,
         "components_json": json.dumps({n: c["version"] for n, c in sv["components"].items()}, sort_keys=True),
         "runtime_config_json": json.dumps(runtime_config or {}, sort_keys=True),

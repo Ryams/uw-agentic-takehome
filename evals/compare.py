@@ -23,16 +23,21 @@ def compare(a: str, b: str, path: Path = RESULTS_CSV) -> str:
     out = [f"A: {a}  system {ra[0]['system_version']}", f"B: {b}  system {rb[0]['system_version']}", ""]
     ca, cb = json.loads(ra[0]["components_json"]), json.loads(rb[0]["components_json"])
     changed = [f"  {n}: {ca.get(n)} -> {cb.get(n)}" for n in sorted(set(ca) | set(cb)) if ca.get(n) != cb.get(n)]
-    out += ["Component changes:"] + (changed or ["  (none)"]) + ["", "Metrics (mean over seeds):"]
+    out += ["Component changes:"] + (changed or ["  (none)"])
     metric_cols = [c for c in ra[0] if c not in BASE_COLUMNS + TAIL_COLUMNS]
 
     def mean(rows, col):
         vals = [float(r[col]) for r in rows if r.get(col, "") != ""]
         return sum(vals) / len(vals) if vals else None
-    for col in metric_cols:
-        ma, mb = mean(ra, col), mean(rb, col)
-        if ma is not None and mb is not None:
-            out.append(f"  {col}: {ma:.3f} -> {mb:.3f} ({mb - ma:+.3f})")
+    slices = sorted({r["slice"] for r in ra} & {r["slice"] for r in rb}, key=lambda x: (x != "overall", x))
+    for sl in slices:  # per-slice deltas (mean over seeds/sets); n shows slice size so small slices are visible
+        sa, sb = [r for r in ra if r["slice"] == sl], [r for r in rb if r["slice"] == sl]
+        na, nb = sum(int(r["n_leads"]) for r in sa), sum(int(r["n_leads"]) for r in sb)
+        out += ["", f"Slice {sl}  (n={na} -> {nb}):"]
+        for col in metric_cols:
+            ma, mb = mean(sa, col), mean(sb, col)
+            if ma is not None and mb is not None:
+                out.append(f"  {col}: {ma:.3f} -> {mb:.3f} ({mb - ma:+.3f})")
     return "\n".join(out)
 
 

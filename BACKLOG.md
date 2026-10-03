@@ -56,7 +56,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 ## Evals
 - [core] Grader using answer key + clean data: path correct, blockers identified
 - [core] Follow-up quality: minimal (no over-asking, no missed blockers), bind-only not chased, no unnecessary escalation
-- [core] Multi-seed runner with summary report and diffs between runs
+- [core] Multi-seed runner with summary report and diffs between runs; metrics overall and per slice (protocol, outcome, failure mode, archetype, tier; D18)
 - [next] LLM-judged email quality rubric
 - [next] End-to-end metrics: replies needed to close, time-to-resolution
 - [hit list] Feed UW overrides back into the eval set
