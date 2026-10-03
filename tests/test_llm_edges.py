@@ -171,7 +171,7 @@ def test_summarizer_uses_model_and_falls_back():
     got, used = summarize(FakeLLM({"summarizer": s}), REPORT)
     assert used and got == s
     got, used = summarize(FakeLLM({"summarizer": LLMError("down")}), REPORT)
-    assert not used and "ready to quote" in got.headline and any("assumed pool_type" in u for u in got.uncertainties)
+    assert not used and got.headline.lower().startswith("ready to quote") and any("assumed pool_type" in u for u in got.uncertainties)
     assert "conflict: zero acreage" in got.uncertainties
     empty = Summary(headline="", rationale=[], uncertainties=[], suggested_action="")
     assert summarize(FakeLLM({"summarizer": empty}), REPORT)[1] is False          # empty model output -> fallback

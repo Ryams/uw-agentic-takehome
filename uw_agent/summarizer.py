@@ -23,15 +23,36 @@ class Summary(BaseModel):
     suggested_action: str
 
 
+REASON_TEXT = {"conflict": "data conflict to verify", "decline": "proposed decline", "escalate": "protocol escalation",
+               "unresolved_system_data": "system data unavailable", "blocked_no_source": "blocked, no data source",
+               "producer_not_applicable": "producer said N/A on a needed value", "too_many_emails": "too many follow-ups",
+               "email_draft": "email draft to review", "internal_error": "internal error"}
+
+
 def fallback_summary(report: dict[str, Any]) -> Summary:
     """Deterministic summary from the report (no model)."""
-    rationale = [f"{p['protocol']}: {p.get('outcome') or p['status']}" for p in report.get("protocols", [])][:4]
+    state, n_asks = report.get("state", ""), len(report.get("asks", []))
+    reasons = [REASON_TEXT.get(r["type"], r["type"]) for r in report.get("reasons", [])]
+    if state == "ready_to_quote":
+        headline = "Ready to quote" + (" with conditions" if report.get("conditions") else "")
+    elif state == "awaiting_reply":
+        headline = f"Waiting on the producer: {n_asks} question{'s' if n_asks != 1 else ''} sent"
+    elif state == "needs_uw":
+        headline = "Needs your decision: " + (reasons[0] if reasons else "review required")
+    else:
+        headline = "Review this lead"
+    rationale = []
+    for p in report.get("protocols", []):
+        if p.get("outcome"):
+            rationale.append(f"{p['protocol']}: {p['outcome']}")
+        elif p.get("status") == "blocked":
+            rationale.append(f"{p['protocol']}: waiting on {', '.join(p.get('blocked_on', []))}")
+    rationale = rationale[:4] or ["no protocol applied yet"]
     unc = [f"assumed {a['field']} = {a['value']} ({a.get('why', 'assumption')})" for a in report.get("assumptions", [])]
     unc += [f"conflict: {c['message']}" for c in report.get("conflicts", [])]
     action = {"ready_to_quote": "Review and approve the quote.", "awaiting_reply": "Wait for the producer's reply.",
-              "needs_uw": "Your decision is needed."}.get(report.get("state", ""), "Review this lead.")
-    return Summary(headline=f"{report.get('state', 'unknown').replace('_', ' ')}: {report.get('decision') or 'pending'}",
-                   rationale=rationale, uncertainties=unc, suggested_action=action)
+              "needs_uw": "Your decision is needed."}.get(state, "Review this lead.")
+    return Summary(headline=headline, rationale=rationale, uncertainties=unc, suggested_action=action)
 
 
 def summarize(llm: StructuredLLM, report: dict[str, Any]) -> tuple[Summary, bool]:

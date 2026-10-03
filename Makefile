@@ -1,4 +1,4 @@
-.PHONY: setup up down test smoke-llm run demo-offline
+.PHONY: setup up down test smoke-llm run demo-offline ui ui-offline
 
 setup:            ## install deps + enable the version-bump pre-commit hook
 	uv sync
@@ -21,3 +21,9 @@ run:              ## run the queue end to end with Claude (needs `make up` and A
 
 demo-offline:     ## same, with the rule-based stand-in instead of Claude (no API key)
 	uv run python -m uw_agent.cli run --seed 42 --offline
+
+ui:               ## underwriter UI on http://localhost:8090 (needs `make up` and ANTHROPIC_API_KEY)
+	uv run uvicorn --factory uw_agent.server:make_app --port 8090
+
+ui-offline:       ## same UI with the rule-based stand-in (no API key)
+	UW_OFFLINE=1 uv run uvicorn --factory uw_agent.server:make_app --port 8090

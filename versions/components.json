@@ -179,11 +179,11 @@
     "version": 3
   },
   "summarizer": {
-    "content_hash": "828f58726476",
+    "content_hash": "c9260c3ca58f",
     "files": [
       "uw_agent/prompts/summarizer.md",
       "uw_agent/summarizer.py"
     ],
-    "version": 1
+    "version": 2
   }
 }

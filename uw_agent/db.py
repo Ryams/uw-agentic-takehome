@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS runs (
 CREATE TABLE IF NOT EXISTS leads (
     run_id TEXT, lead_id TEXT, idx INTEGER, received_at TEXT, source TEXT, raw_json TEXT,
     state TEXT, decision TEXT, priority INTEGER, latest_round INTEGER DEFAULT 0, updated_at TEXT,
+    uw_status TEXT, uw_decision TEXT, uw_note TEXT,
     PRIMARY KEY (run_id, lead_id));
 CREATE TABLE IF NOT EXISTS decisions (
     run_id TEXT, lead_id TEXT, round INTEGER, created_at TEXT, trigger TEXT, state TEXT, decision TEXT,
@@ -52,6 +53,11 @@ class Database:
         with self.lock:
             self.conn.executescript(SCHEMA)
             self.conn.execute(versioning.SCHEMA)
+            for col in ("uw_status", "uw_decision", "uw_note"):   # migrate DBs created before the UI existed
+                try:
+                    self.conn.execute(f"ALTER TABLE leads ADD COLUMN {col} TEXT")
+                except sqlite3.OperationalError:
+                    pass
 
     def execute(self, sql: str, args: tuple = ()) -> sqlite3.Cursor:
         with self.lock:
@@ -149,6 +155,40 @@ class Database:
                          " latency_s, stop_reason, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                          (run_id, lead_id, c.task, c.model, c.effort, c.input_tokens, c.output_tokens, c.request_id,
                           c.latency_s, c.stop_reason, now()))
+
+    # --- underwriter actions --------------------------------------------------------------------
+    def add_uw_action(self, run_id: str, lead_id: str, action: str, payload: dict[str, Any]) -> int:
+        return self.execute("INSERT INTO uw_actions (run_id, lead_id, action, payload_json, created_at) VALUES (?,?,?,?,?)",
+                            (run_id, lead_id, action, json.dumps(payload, default=str), now())).lastrowid
+
+    def uw_actions(self, run_id: str, lead_id: str) -> list[dict[str, Any]]:
+        return [{"id": r["id"], "action": r["action"], "payload": json.loads(r["payload_json"]), "created_at": r["created_at"]}
+                for r in self.query("SELECT * FROM uw_actions WHERE run_id=? AND lead_id=? ORDER BY id", (run_id, lead_id))]
+
+    def set_uw_status(self, run_id: str, lead_id: str, status: Optional[str], decision: Optional[str] = None,
+                      note: Optional[str] = None) -> None:
+        self.execute("UPDATE leads SET uw_status=?, uw_decision=?, uw_note=?, updated_at=? WHERE run_id=? AND lead_id=?",
+                     (status, decision, note, now(), run_id, lead_id))
+
+    def update_email(self, email_id: int, **cols: Any) -> None:
+        sets = ", ".join(f"{k}=?" for k in cols)
+        self.execute(f"UPDATE emails SET {sets} WHERE id=?", (*cols.values(), email_id))
+
+    def decisions_history(self, run_id: str, lead_id: str) -> list[dict[str, Any]]:
+        return [{"round": r["round"], "trigger": r["trigger"], "state": r["state"], "decision": r["decision"],
+                 "created_at": r["created_at"]}
+                for r in self.query("SELECT round, trigger, state, decision, created_at FROM decisions "
+                                    "WHERE run_id=? AND lead_id=? ORDER BY round", (run_id, lead_id))]
+
+    def run_row(self, run_id: str) -> Optional[sqlite3.Row]:
+        return self.one("SELECT * FROM runs WHERE run_id=?", (run_id,))
+
+    def latest_run_id(self) -> Optional[str]:
+        r = self.one("SELECT run_id FROM runs ORDER BY started_at DESC, rowid DESC LIMIT 1")
+        return r["run_id"] if r else None
+
+    def set_run_status(self, run_id: str, status: str) -> None:
+        self.execute("UPDATE runs SET status=? WHERE run_id=?", (status, run_id))
 
     def queue_view(self, run_id: str) -> list[dict[str, Any]]:
         """Leads ordered for the underwriter: quick wins first, then decisions needed, then waiting."""

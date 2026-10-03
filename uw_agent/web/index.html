@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UW Assistant</title>
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #ffffff; --ink: #1b2330; --muted: #6a7585; --line: #e3e7ee;
+  --accent: #2557d6; --ok: #1a7f4b; --ok-bg: #e5f5ec; --warn: #a55a00; --warn-bg: #fdf0dc;
+  --bad: #b3261e; --bad-bg: #fbe7e5; --info: #2557d6; --info-bg: #e8eefc; --hold: #5b4bb5; --hold-bg: #eeeafb;
+  --radius: 10px; --shadow: 0 1px 2px rgba(20,30,50,.06), 0 2px 8px rgba(20,30,50,.04);
+}
+:root:not([data-theme="light"]) { }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --panel: #1a202b; --ink: #e8ecf3; --muted: #93a0b4; --line: #2a3342;
+    --accent: #7ba1ff; --ok: #62d394; --ok-bg: #16352a; --warn: #f2b45c; --warn-bg: #3a2c14;
+    --bad: #ff8f87; --bad-bg: #3d1f1d; --info: #7ba1ff; --info-bg: #1b2a4d; --hold: #b3a6ff; --hold-bg: #2a2550;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --panel: #1a202b; --ink: #e8ecf3; --muted: #93a0b4; --line: #2a3342;
+  --accent: #7ba1ff; --ok: #62d394; --ok-bg: #16352a; --warn: #f2b45c; --warn-bg: #3a2c14;
+  --bad: #ff8f87; --bad-bg: #3d1f1d; --info: #7ba1ff; --info-bg: #1b2a4d; --hold: #b3a6ff; --hold-bg: #2a2550; --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+button { font: inherit; cursor: pointer; }
+header { position: sticky; top: 0; z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+header h1 { font-size: 16px; margin: 0; }
+.badge { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--info-bg); color: var(--info); border-radius: 6px; padding: 2px 8px; border: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
+.controls label { color: var(--muted); font-size: 12px; display: flex; gap: 4px; align-items: center; }
+input, select, textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+input[type=number] { width: 70px; }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 12px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.good { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+main { display: grid; grid-template-columns: minmax(320px, 440px) 1fr; gap: 16px; padding: 16px; align-items: start; max-width: 1500px; margin: 0 auto; }
+.strip { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.pill { border-radius: 999px; padding: 3px 11px; font-size: 12px; background: var(--panel); border: 1px solid var(--line); }
+.group h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 16px 0 8px; display: flex; justify-content: space-between; align-items: center; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; cursor: pointer; box-shadow: var(--shadow); }
+.card:hover { border-color: var(--accent); }
+.card.sel { border-color: var(--accent); outline: 2px solid var(--info-bg); }
+.card .top { display: flex; justify-content: space-between; gap: 8px; }
+.card .id { font: 12px ui-monospace, monospace; color: var(--muted); }
+.card .addr { font-weight: 600; }
+.card .head { color: var(--ink); margin-top: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.chip { font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+.chip.ok { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.chip.bad { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
+.chip.hold { background: var(--hold-bg); color: var(--hold); border-color: transparent; }
+.chip.info { background: var(--info-bg); color: var(--info); border-color: transparent; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); position: sticky; top: 62px; max-height: calc(100vh - 78px); overflow: auto; }
+.panel .inner { padding: 16px; }
+.panel h3 { margin: 18px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.panel h3:first-child { margin-top: 0; }
+.empty { color: var(--muted); padding: 40px 16px; text-align: center; }
+.callout { border-radius: 8px; padding: 8px 10px; margin: 6px 0; background: var(--hold-bg); color: var(--ink); border-left: 3px solid var(--hold); }
+.callout.warn { background: var(--warn-bg); border-color: var(--warn); }
+.callout.bad { background: var(--bad-bg); border-color: var(--bad); }
+.callout.ok { background: var(--ok-bg); border-color: var(--ok); }
+.callout b { display: block; font-size: 12px; margin-bottom: 2px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+details { border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; }
+summary { cursor: pointer; padding: 6px 10px; display: flex; gap: 8px; align-items: center; }
+details .body { padding: 6px 10px 10px; }
+.path li { margin: 2px 0; }
+.mail { border: 1px solid var(--line); border-radius: 8px; margin: 8px 0; overflow: hidden; }
+.mail .mh { background: var(--bg); padding: 6px 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mail pre { margin: 0; padding: 10px; white-space: pre-wrap; font: 13px/1.5 ui-monospace, Menlo, monospace; }
+.mail textarea { width: 100%; min-height: 220px; font: 13px/1.5 ui-monospace, Menlo, monospace; border: 0; border-top: 1px solid var(--line); border-radius: 0; }
+.actions { position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inline { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.muted { color: var(--muted); }
+.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+#toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 20; }
+#toast.show { opacity: 1; }
+@media (max-width: 900px) {
+  main { grid-template-columns: 1fr; padding: 12px 16px; }
+  .panel { position: fixed; inset: 0; top: 0; max-height: none; z-index: 10; border-radius: 0; }
+  .panel.closed { display: none; }
+  .back { display: inline-block !important; }
+}
+.back { display: none; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>UW Assistant</h1>
+  <button class="badge" id="ver" title="System version (click for component versions)">version</button>
+  <span class="muted" id="runinfo"></span>
+  <div class="controls">
+    <label>seed <input type="number" id="seed" value="42"></label>
+    <label>difficulty <select id="diff"><option>mixed</option><option>easy</option><option>hard</option></select></label>
+    <label title="Off: the agent drafts follow-up emails and you review and send them"><input type="checkbox" id="autosend" checked> auto-send follow-ups</label>
+    <button class="btn primary" id="start">Run morning queue</button>
+    <button class="btn" id="sim" title="Demo: the producer simulator answers every outstanding email">Simulate replies</button>
+    <button class="btn" id="poll" title="Check the mailbox for new replies">Check replies</button>
+    <button class="btn" id="theme" title="Toggle light/dark">◐</button>
+  </div>
+</header>
+<main>
+  <section>
+    <div class="strip" id="strip"></div>
+    <div id="groups"><div class="empty">No run yet. Click “Run morning queue”.</div></div>
+  </section>
+  <aside class="panel closed" id="panel"><div class="empty">Select a lead to see what the agent did and what it needs from you.</div></aside>
+</main>
+<div id="toast"></div>
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const api = async (path, opts = {}) => {
+  const r = await fetch(path, { headers: { "content-type": "application/json" }, ...opts, body: opts.body ? JSON.stringify(opts.body) : undefined });
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m } catch (e) {} throw new Error(m); }
+  return r.json();
+};
+const toast = (m) => { const t = $("#toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600); };
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} } };
+
+let state = { run: null, leads: [], sel: null, timer: null };
+const DECISION = { quote: ["ok", "Quote"], quote_with_conditions: ["warn", "Quote with conditions"], decline: ["bad", "Decline"], escalate: ["hold", "Escalate"] };
+const GROUPS = [
+  ["ready_to_quote", "Ready to quote", "Agent has everything it needs. Approve, or look closer at the ones with conditions."],
+  ["needs_uw", "Needs your decision", "The agent stopped here: a conflict, a proposed decline, or something only you can judge."],
+  ["awaiting_reply", "Awaiting reply", "One consolidated follow-up is out. These return when the producer answers."],
+  ["actioned", "Actioned", "You've handled these."],
+];
+const REASON = { conflict: "data conflict", decline: "proposed decline", escalate: "protocol escalation", unresolved_system_data: "missing system data",
+  blocked_no_source: "blocked, no data source", producer_not_applicable: "producer said N/A", too_many_emails: "too many emails", email_draft: "email draft to review", internal_error: "internal error" };
+
+function chip(cls, text) { return `<span class="chip ${cls}">${esc(text)}</span>`; }
+function cardHtml(l) {
+  const dec = DECISION[l.decision];
+  const chips = [];
+  if (l.uw_status) chips.push(chip("ok", l.uw_status.replace("_", " ")));
+  else if (dec) chips.push(chip(dec[0], (l.provisional ? "provisional: " : "") + dec[1]));
+  l.reasons.filter(r => r !== "email_draft").forEach(r => chips.push(chip("hold", REASON[r] || r)));
+  if (l.reasons.includes("email_draft")) chips.push(chip("info", "draft email to review"));
+  if (l.conditions.length) chips.push(chip("warn", `${l.conditions.length} condition${l.conditions.length > 1 ? "s" : ""} to wait on`));
+  if (l.n_low_confidence) chips.push(chip("warn", `${l.n_low_confidence} low-confidence assumption`));
+  else if (l.n_assumptions) chips.push(chip("", `${l.n_assumptions} assumption${l.n_assumptions > 1 ? "s" : ""}`));
+  if (l.n_asks && l.state === "awaiting_reply") chips.push(chip("info", `${l.n_asks} question${l.n_asks > 1 ? "s" : ""} out`));
+  return `<div class="card ${state.sel === l.lead_id ? "sel" : ""}" data-id="${esc(l.lead_id)}">
+    <div class="top"><span class="addr">${esc(l.address || l.lead_id)}</span><span class="id">${esc(l.lead_id.replace(/^LEAD-/, ""))}</span></div>
+    <div class="head">${esc(l.headline)}</div><div class="chips">${chips.join("")}</div></div>`;
+}
+function render() {
+  const leads = state.leads, by = {};
+  leads.forEach(l => (by[l.state] ||= []).push(l));
+  const n = k => (by[k] || []).length;
+  const quick = leads.filter(l => l.state === "ready_to_quote" && l.priority === 0).length;
+  $("#strip").innerHTML = [["Ready", n("ready_to_quote"), "ok"], ["Needs you", n("needs_uw"), "hold"], ["Awaiting", n("awaiting_reply"), "info"], ["Actioned", n("actioned"), ""]]
+    .map(([t, c, k]) => `<span class="pill">${t} <b>${c}</b></span>`).join("") +
+    (quick ? `<button class="btn good" id="quick">Approve ${quick} quick win${quick > 1 ? "s" : ""}</button>` : "");
+  const q = $("#quick"); if (q) q.onclick = quickWins;
+  $("#groups").innerHTML = leads.length ? GROUPS.map(([k, title, hint]) => {
+    const items = by[k] || [];
+    if (!items.length) return "";
+    const body = items.map(cardHtml).join("");
+    return k === "actioned" ? `<div class="group"><details><summary><b>${title}</b> <span class="muted">${items.length}</span></summary>${body}</details></div>`
+      : `<div class="group"><h2><span>${title} · ${items.length}</span></h2><div class="muted" style="margin:-4px 0 8px">${hint}</div>${body}</div>`;
+  }).join("") : `<div class="empty">${state.run ? "Processing the queue…" : "No run yet. Click “Run morning queue”."}</div>`;
+  document.querySelectorAll(".card").forEach(c => c.onclick = () => select(c.dataset.id));
+  const r = state.run;
+  $("#runinfo").textContent = r ? `${r.run_id} · seed ${r.seed} · ${r.processed}/${r.n_leads} processed${r.status === "running" ? " …" : ""}` : "";
+}
+async function refresh(keepSel = true) {
+  try {
+    if (!state.run) { try { state.run = await api("/api/runs/latest"); } catch (e) { return; } }
+    const q = await api(`/api/runs/${state.run.run_id}/queue`);
+    state.run = q.run; state.leads = q.leads; render();
+    if (state.sel && keepSel) loadDetail(state.sel, false);
+    clearTimeout(state.timer);
+    if (state.run.status === "running") state.timer = setTimeout(refresh, 1500);
+  } catch (e) { toast(e.message); }
+}
+async function select(id) { state.sel = id; render(); await loadDetail(id, true); }
+
+function listOrNone(items, fn) { return items.length ? items.map(fn).join("") : `<div class="muted">none</div>`; }
+function pathHtml(p) {
+  return `<ol class="path">${p.path.map(s => `<li><b>${esc(s.question)}</b> <span class="muted">${Object.entries(s.inputs).map(([k, v]) => `${esc(k)} = ${esc(v ?? "missing")}`).join(", ")}</span> → <b>${esc(s.branch)}</b></li>`).join("")}</ol>`;
+}
+function detailHtml(d) {
+  const c = d.card, dec = d.decision, rep = dec.report, sum = dec.summary || {};
+  const decc = DECISION[c.decision];
+  let h = `<div class="inner"><button class="btn back" id="back">← Queue</button>
+    <h2 style="margin:0">${esc(rep.address || c.lead_id)}</h2>
+    <div class="muted mono">${esc(c.lead_id)} · round ${dec.round} · decided by ${esc(rep.system_version)}</div>
+    <div class="chips" style="margin:8px 0">${decc ? chip(decc[0], (rep.provisional ? "provisional: " : "") + decc[1]) : chip("hold", "no decision yet")}${c.uw_status ? chip("ok", c.uw_status.replace("_", " ")) : ""}</div>
+    <div class="callout ${c.state === "needs_uw" ? "" : "ok"}"><b>${esc(sum.headline || "")}</b>${(sum.rationale || []).map(x => `<div>• ${esc(x)}</div>`).join("")}
+      ${sum.suggested_action ? `<div style="margin-top:4px"><b style="display:inline">Next:</b> ${esc(sum.suggested_action)}</div>` : ""}</div>`;
+  if (rep.reasons.length) {
+    h += `<h3>Why this needs you</h3>` + rep.reasons.map(r => {
+      if (r.type === "conflict") return `<div class="callout warn"><b>Data conflict</b>${r.conflicts.map(x => `<div>${esc(x.message)} <span class="muted mono">(${esc(x.fields.join(", "))})</span></div>`).join("")}</div>`;
+      if (r.type === "unresolved_system_data") return `<div class="callout bad"><b>System data unavailable</b>Could not fetch: ${esc(r.fields.join(", "))}. This is not something to ask the producer.</div>`;
+      return `<div class="callout warn"><b>${esc(REASON[r.type] || r.type)}</b>${esc(r.detail || (r.fields || []).join(", ") || "")}</div>`;
+    }).join("");
+  }
+  if (rep.conditions.length) h += `<h3>Wait-to-quote conditions</h3>` + rep.conditions.map(x => `<div class="callout"><b>Condition on the quote</b>${esc(x)}</div>`).join("");
+  if (rep.recommendations.length) h += rep.recommendations.map(x => `<div class="callout"><b>Recommendation (non-binding)</b>${esc(x)}</div>`).join("");
+
+  // emails
+  const mails = d.emails;
+  h += `<h3>Follow-up email${mails.length > 1 ? "s" : ""}</h3>`;
+  if (!mails.length) h += `<div class="muted">No email needed.</div>`;
+  mails.forEach(m => {
+    const out = m.direction === "out", draft = m.status === "draft";
+    h += `<div class="mail"><div class="mh">${chip(out ? (draft ? "info" : "ok") : "hold", out ? (draft ? "DRAFT (not sent)" : "sent") : "reply received")}
+      <b>${esc(m.subject)}</b><span class="muted mono">to ${esc(m.to)}</span>${out && !m.used_llm ? chip("", "template") : ""}</div>
+      ${draft ? `<textarea id="draft-${m.id}">${esc(m.body)}</textarea><div class="inline" style="padding:8px"><button class="btn good" data-send="${m.id}">Send as is</button><button class="btn" data-save="${m.id}">Save edits</button><span class="muted">Keep the numbered lines so replies map back to the questions.</span></div>` : `<pre>${esc(m.body)}</pre>`}</div>`;
+  });
+  if (rep.asks.length) h += `<div class="muted">Asking: ${rep.asks.map(a => esc(a.label) + (a.conditional ? ` <i>(if ${esc(a.if)})</i>` : "")).join(" · ")}</div>`;
+
+  // assumptions
+  h += `<h3>Assumptions &amp; derived values</h3>`;
+  h += listOrNone(rep.assumptions, a => `<div class="callout ${a.low_confidence ? "warn" : ""}"><b>${esc(a.field)} = ${esc(a.value)} ${a.low_confidence ? "· low confidence" : ""}</b>${esc(a.why)} <span class="muted">(${esc(a.basis)})</span>
+      ${a.evidence && a.evidence.length ? `<div class="muted">evidence: ${a.evidence.map(esc).join("; ")}</div>` : ""}
+      <div class="inline"><button class="btn" data-override="${esc(a.field)}">Correct this value</button></div></div>`);
+  h += listOrNone(rep.derived, x => `<div class="callout"><b>${esc(x.field)} = ${esc(x.value)} (derived)</b>${esc(x.why)}</div>`);
+
+  // protocols
+  h += `<h3>Playbook results</h3>` + rep.protocols.map(p => `<details><summary>${chip(p.status === "decided" ? "ok" : p.status === "blocked" ? "warn" : "", p.status)} <b>${esc(p.protocol)}</b> <span class="muted">${esc(p.outcome || (p.blocked_on || []).join(", "))}</span></summary>
+      <div class="body">${p.path.length ? pathHtml(p) : '<span class="muted">does not apply</span>'}${p.conditions.length ? p.conditions.map(x => `<div>→ ${esc(x)}</div>`).join("") : ""}</div></details>`).join("");
+  if (rep.skipped_protocols.length) h += `<div class="muted">Not evaluated after a decline: ${esc(rep.skipped_protocols.join(", "))}</div>`;
+
+  // data
+  h += `<h3>Data gathered</h3><details><summary>${rep.fetched.length} fetched, ${rep.lookups.length} lookups, ${rep.tool_failures.length} failures</summary><div class="body"><table>
+    ${rep.fetched.map(f => `<tr><td>${esc(f.field)}</td><td>${esc(f.value)}</td><td class="muted">${esc(f.source)}</td></tr>`).join("")}
+    ${rep.lookups.map(f => `<tr><td>${esc(f.field)}</td><td>${esc(f.interpretation)} ${f.value != null ? "= " + esc(f.value) : ""}</td><td class="muted">${esc(f.rationale || (f.evidence || [])[0] || "")}</td></tr>`).join("")}
+    ${rep.tool_failures.map(f => `<tr><td>${esc(f.field)}</td><td class="muted">${esc(f.status)}</td><td class="muted">${esc(f.source)} ${esc(f.detail)}</td></tr>`).join("")}</table></div></details>`;
+  h += `<h3>History</h3>` + d.history.map(x => `<div class="muted mono">r${x.round} · ${esc(x.trigger)} → ${esc(x.state)} ${esc(x.decision || "")}</div>`).join("");
+  if (d.uw_actions.length) h += `<h3>Your actions</h3>` + d.uw_actions.map(x => `<div class="muted mono">${esc(x.action)} ${esc(JSON.stringify(Object.fromEntries(Object.entries(x.payload).filter(([k]) => !k.startsWith("agent_") && k !== "action"))))}</div>`).join("");
+  h += `</div><div class="actions">`;
+  const canApprove = ["quote", "quote_with_conditions", "decline"].includes(c.decision) && !c.uw_status;
+  h += `<button class="btn ${c.decision === "decline" ? "bad" : "good"}" id="approve" ${canApprove ? "" : "disabled"}>${c.decision === "decline" ? "Approve decline" : "Approve quote"}</button>
+    <select id="ovd"><option value="">Override decision…</option><option value="quote">Quote</option><option value="quote_with_conditions">Quote with conditions</option><option value="decline">Decline</option></select>
+    <button class="btn" id="rerun">Re-run</button><button class="btn" id="note">Add note</button></div>`;
+  return h;
+}
+async function loadDetail(id, scroll) {
+  const d = await api(`/api/runs/${state.run.run_id}/leads/${id}`);
+  const p = $("#panel"); p.classList.remove("closed"); p.innerHTML = detailHtml(d);
+  if (scroll) p.scrollTop = 0;
+  const run = async (body, msg) => { try { await api(`/api/runs/${state.run.run_id}/leads/${id}/actions`, { method: "POST", body }); toast(msg); await refresh(); } catch (e) { toast(e.message); } };
+  const b = $("#back"); if (b) b.onclick = () => { p.classList.add("closed"); state.sel = null; render(); };
+  const ap = $("#approve"); if (ap) ap.onclick = () => run({ action: "approve" }, "Approved");
+  $("#ovd").onchange = e => { const v = e.target.value; if (!v) return; const note = prompt("Why are you overriding the agent? (required)"); if (note) run({ action: "override_decision", decision: v, note }, "Decision overridden"); else e.target.value = ""; };
+  $("#rerun").onclick = () => run({ action: "reprocess" }, "Re-run");
+  $("#note").onclick = () => { const note = prompt("Note"); if (note) run({ action: "note", note }, "Note saved"); };
+  p.querySelectorAll("[data-send]").forEach(x => x.onclick = () => run({ action: "send_draft", email_id: +x.dataset.send }, "Email sent"));
+  p.querySelectorAll("[data-save]").forEach(x => x.onclick = () => run({ action: "edit_draft", email_id: +x.dataset.save, body: $("#draft-" + x.dataset.save).value }, "Draft saved"));
+  p.querySelectorAll("[data-override]").forEach(x => x.onclick = () => { const v = prompt(`Correct value for ${x.dataset.override}`); if (v !== null && v !== "") run({ action: "provide_value", field: x.dataset.override, value: /^(true|false)$/i.test(v) ? v.toLowerCase() === "true" : v }, "Value updated; lead re-evaluated"); });
+}
+async function quickWins() { try { const r = await api(`/api/runs/${state.run.run_id}/approve_quick_wins`, { method: "POST" }); toast(`Approved ${r.approved.length} quick wins`); refresh(); } catch (e) { toast(e.message); } }
+
+$("#start").onclick = async () => {
+  try {
+    state.sel = null; $("#panel").classList.add("closed");
+    state.run = await api("/api/runs", { method: "POST", body: { seed: +$("#seed").value, difficulty: $("#diff").value, auto_send: $("#autosend").checked } });
+    state.leads = []; render(); refresh(false);
+  } catch (e) { toast(e.message); }
+};
+$("#poll").onclick = async () => { if (!state.run) return; const r = await api(`/api/runs/${state.run.run_id}/poll`, { method: "POST" }); toast(`${r.reprocessed.length} lead(s) updated from replies`); refresh(); };
+$("#sim").onclick = async () => { if (!state.run) return; try { const r = await api(`/api/runs/${state.run.run_id}/simulate_replies`, { method: "POST", body: { mode: "complete" } }); toast(`${r.replies} simulated repl${r.replies === 1 ? "y" : "ies"}; ${r.reprocessed.length} lead(s) updated`); refresh(); } catch (e) { toast(e.message); } };
+$("#theme").onclick = () => { const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); const nx = cur === "dark" ? "light" : "dark"; document.documentElement.dataset.theme = nx; store.set("theme", nx); };
+$("#ver").onclick = async () => { const v = await api("/api/version"); alert(`system ${v.system_version}${v.dirty ? " (uncommitted changes)" : ""}\n\n` + Object.entries(v.components).map(([k, x]) => `${k}: v${x}`).join("\n")); };
+const th = store.get("theme", ""); if (th) document.documentElement.dataset.theme = th;
+api("/api/version").then(v => $("#ver").textContent = v.system_version).catch(() => {});
+refresh();
+</script>
+</body>
+</html>
