@@ -1,0 +1,182 @@
+{
+  "_comment": "Seeded eval sets: generator parameters and the composition they produced (D17). A run compares the live composition to this and flags drift (generator or protocol change). Regenerate with `python -m evals.runner --record-composition`.",
+  "sets": {
+    "s42-mixed": {
+      "seed": 42,
+      "count": 10,
+      "difficulty": "mixed",
+      "composition": {
+        "n": 10,
+        "tier": {
+          "easy": 2,
+          "hard": 4,
+          "medium": 4
+        },
+        "archetype": {
+          "none": 4,
+          "occupancy_conflict": 2,
+          "post_and_pier": 1,
+          "profile_kyc": 3,
+          "wildfire_severe": 2
+        },
+        "outcome": {
+          "general_plumbing:OK_TO_QUOTE": 10,
+          "roof_class:CONFIRM_CLASS_A_60_DAYS_OR_DECLINE": 2,
+          "roof_class:OK_TO_QUOTE": 8,
+          "siding:CONFIRM_CLASS_A_SIDING_UW_PERIOD": 2,
+          "siding:NO_ACTION": 8,
+          "water_heaters:OK_TO_QUOTE": 10
+        },
+        "failure_mode": {
+          "bind_only_missing": 8,
+          "conflict": 4,
+          "derived_value": 10,
+          "hidden_hazard_field": 3,
+          "lookup_field": 6,
+          "missing_producer_field": 10,
+          "missing_system_owned_field": 10
+        },
+        "expected_state": {
+          "needs_uw": 4,
+          "ready_to_quote": 6
+        }
+      }
+    },
+    "s7-hard": {
+      "seed": 7,
+      "count": 10,
+      "difficulty": "hard",
+      "composition": {
+        "n": 10,
+        "tier": {
+          "hard": 10
+        },
+        "archetype": {
+          "electrical_hazard": 6,
+          "occupancy_conflict": 1,
+          "pool_hazard": 1,
+          "post_and_pier": 1,
+          "profile_kyc": 1,
+          "replacement_cost_gap": 1,
+          "trust_llc": 1,
+          "wildfire_severe": 2
+        },
+        "outcome": {
+          "general_plumbing:OK_TO_QUOTE": 10,
+          "roof_class:CONFIRM_CLASS_A_60_DAYS_OR_DECLINE": 2,
+          "roof_class:OK_TO_QUOTE": 8,
+          "siding:CONFIRM_CLASS_A_SIDING_UW_PERIOD": 2,
+          "siding:NO_ACTION": 8,
+          "swimming_pools:REQUIRE_COVER": 1,
+          "trusts_and_llcs_quote:QUOTE_REQUIRE_QUESTIONNAIRE": 1,
+          "water_heaters:OK_TO_QUOTE": 10
+        },
+        "failure_mode": {
+          "bind_only_missing": 7,
+          "conflict": 4,
+          "derived_value": 10,
+          "hidden_hazard_field": 5,
+          "lookup_field": 8,
+          "missing_producer_field": 10,
+          "missing_system_owned_field": 10
+        },
+        "expected_state": {
+          "needs_uw": 4,
+          "ready_to_quote": 6
+        }
+      }
+    },
+    "s101-hard": {
+      "seed": 101,
+      "count": 10,
+      "difficulty": "hard",
+      "composition": {
+        "n": 10,
+        "tier": {
+          "hard": 10
+        },
+        "archetype": {
+          "electrical_hazard": 1,
+          "occupancy_conflict": 1,
+          "pc_9_10_rural": 2,
+          "plumbing_water_heater": 2,
+          "pool_hazard": 2,
+          "post_and_pier": 1,
+          "profile_kyc": 1,
+          "replacement_cost_gap": 4,
+          "wildfire_severe": 4
+        },
+        "outcome": {
+          "general_plumbing:DECLINE": 1,
+          "general_plumbing:OK_TO_QUOTE": 8,
+          "general_plumbing:REQUIRE_PLUMBING_INSPECTION": 1,
+          "roof_class:CONFIRM_CLASS_A_60_DAYS_OR_DECLINE": 4,
+          "roof_class:OK_TO_QUOTE": 5,
+          "siding:CONFIRM_CLASS_A_SIDING_UW_PERIOD": 4,
+          "siding:NO_ACTION": 5,
+          "swimming_pools:REQUIRE_COVER": 1,
+          "water_heaters:OK_TO_QUOTE": 8,
+          "water_heaters:REQUIRE_PLUMBING_INSPECTION": 1
+        },
+        "failure_mode": {
+          "bind_only_missing": 6,
+          "conflict": 6,
+          "derived_value": 10,
+          "hidden_hazard_field": 9,
+          "lookup_field": 7,
+          "missing_producer_field": 10,
+          "missing_system_owned_field": 10
+        },
+        "expected_state": {
+          "needs_uw": 7,
+          "ready_to_quote": 3
+        }
+      }
+    },
+    "s13-medium": {
+      "seed": 13,
+      "count": 10,
+      "difficulty": "medium",
+      "composition": {
+        "n": 10,
+        "tier": {
+          "easy": 2,
+          "hard": 4,
+          "medium": 4
+        },
+        "archetype": {
+          "electrical_hazard": 3,
+          "none": 4,
+          "occupancy_conflict": 1,
+          "pool_hazard": 1,
+          "replacement_cost_gap": 1,
+          "trust_llc": 1,
+          "wildfire_severe": 1
+        },
+        "outcome": {
+          "general_plumbing:OK_TO_QUOTE": 10,
+          "roof_class:CONFIRM_CLASS_A_60_DAYS_OR_DECLINE": 1,
+          "roof_class:OK_TO_QUOTE": 9,
+          "siding:CONFIRM_CLASS_A_SIDING_UW_PERIOD": 1,
+          "siding:NO_ACTION": 9,
+          "swimming_pools:REQUIRE_COVER": 1,
+          "trusts_and_llcs_quote:QUOTE_REQUIRE_QUESTIONNAIRE": 1,
+          "water_heaters:OK_TO_QUOTE": 10
+        },
+        "failure_mode": {
+          "bind_only_missing": 6,
+          "conflict": 3,
+          "derived_value": 8,
+          "hidden_hazard_field": 5,
+          "lookup_field": 6,
+          "missing_producer_field": 10,
+          "missing_system_owned_field": 10
+        },
+        "expected_state": {
+          "needs_uw": 3,
+          "ready_to_quote": 7
+        }
+      }
+    }
+  }
+}

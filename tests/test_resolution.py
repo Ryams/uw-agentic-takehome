@@ -28,7 +28,9 @@ def test_normalizer_example_payload():
     assert normalize.normalize_lead({"coverage_e": 300000}).values["coverage_e"] == "300000"  # a bare number is coerced to the option
     assert n.values["fire_department_type"] is None                                   # "Unknown" -> missing
     assert {x["field"] for x in n.notes} >= {"fire_department_type"}
-    assert set(n.values) == set(registry.field_names())
+    assert set(n.values) == set(registry.field_names()) | set(normalize.extension_fields())   # playbook-only fields kept (D3)
+    assert normalize.normalize_lead({"pool_fence_self_locking_or_safety_cover": "yes"}).values[
+        "pool_fence_self_locking_or_safety_cover"] is True
     assert n.invalid == []
     n2 = normalize.normalize_lead({"acreage": "1,200.5", "pool_type": "inground", "is_rental": "N/A",
                                    "has_animals": "Yes", "year_built": "19xx", "bogus": 1})

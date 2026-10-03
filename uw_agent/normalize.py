@@ -15,6 +15,7 @@ from typing import Any
 
 import uw_agent.config  # noqa: F401  (sim-harness on sys.path)
 from shared import registry
+from uw_agent import resolution
 
 SENTINELS = {"", "unknown", "n/a", "na", "null", "tbd", "-", "--", "?"}
 _TRUE = {"true", "yes", "y", "1"}
@@ -28,9 +29,19 @@ class Normalized:
     invalid: list[dict[str, Any]] = field(default_factory=list)  # unusable values (treated as missing)
 
 
+def extension_fields() -> dict[str, dict[str, Any]]:
+    """Playbook fields that are NOT in the registry but are asked of the producer (D3): declared with a `type` in
+    the field-resolution map. Their answers must survive normalization or they would be re-asked forever."""
+    return {n: e for n, e in resolution.load_map()["fields"].items() if "type" in e and n not in registry.fields()}
+
+
+def _type(name: str) -> dict[str, Any]:
+    return registry.fields()[name]["type"] if name in registry.fields() else extension_fields()[name]["type"]
+
+
 def _coerce(name: str, raw: Any) -> tuple[Any, str]:
     """Returns (value, status): status is 'ok' | 'coerced' | 'sentinel' | 'invalid'."""
-    kind = registry.meta(name)["type"]["kind"]
+    kind = _type(name)["kind"]
     if raw is None:
         return None, "ok"
     if isinstance(raw, str):
@@ -41,7 +52,7 @@ def _coerce(name: str, raw: Any) -> tuple[Any, str]:
         s = raw
 
     if kind == "select":
-        opts = registry.select_options(name) or []
+        opts = (registry.select_options(name) if name in registry.fields() else _type(name).get("options")) or []
         for o in opts:
             if str(o).lower() == str(s).strip().lower():
                 return o, "ok" if o == raw else "coerced"
@@ -82,7 +93,7 @@ def _coerce(name: str, raw: Any) -> tuple[Any, str]:
 
 
 def normalize_lead(raw_fields: dict[str, Any]) -> Normalized:
-    known = registry.field_names()
+    known = registry.field_names() + list(extension_fields())
     out = Normalized(values={n: None for n in known})
     for name, raw in raw_fields.items():
         if name not in known:

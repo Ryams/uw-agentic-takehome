@@ -23,9 +23,11 @@
     "version": 0
   },
   "grader": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "383e597a4a81",
+    "files": [
+      "evals/grader.py"
+    ],
+    "version": 1
   },
   "leadgen_generator": {
     "content_hash": "8f88aa919d40",
@@ -68,11 +70,11 @@
     "version": 0
   },
   "normalizer": {
-    "content_hash": "ef61b5fe307d",
+    "content_hash": "83f8d044a388",
     "files": [
       "uw_agent/normalize.py"
     ],
-    "version": 1
+    "version": 2
   },
   "offline_llm": {
     "content_hash": "06f76e432cb4",
@@ -82,13 +84,13 @@
     "version": 0
   },
   "orchestrator": {
-    "content_hash": "c936701bda94",
+    "content_hash": "8c42ce024257",
     "files": [
       "uw_agent/harness.py",
       "uw_agent/intake.py",
       "uw_agent/orchestrator.py"
     ],
-    "version": 3
+    "version": 4
   },
   "protocol:general_plumbing": {
     "content_hash": "19d8c2fae7e9",

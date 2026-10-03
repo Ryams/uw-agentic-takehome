@@ -1,4 +1,4 @@
-.PHONY: setup up down test smoke-llm run demo-offline ui ui-offline
+.PHONY: setup up down test smoke-llm run demo-offline ui ui-offline eval eval-offline eval-live
 
 setup:            ## install deps + enable the version-bump pre-commit hook
 	uv sync
@@ -27,3 +27,12 @@ ui:               ## underwriter UI on http://localhost:8090 (needs `make up` an
 
 ui-offline:       ## same UI with the rule-based stand-in (no API key)
 	UW_OFFLINE=1 uv run uvicorn --factory uw_agent.server:make_app --port 8090
+
+eval:             ## all eval sets (seeded + fixed) in-process; Claude if ANTHROPIC_API_KEY is set, else the offline stand-in
+	uv run python -m evals.runner
+
+eval-offline:     ## same, forcing the rule-based stand-in (deterministic, no key)
+	uv run python -m evals.runner --llm offline
+
+eval-live:        ## seeded sets against the docker stack (needs `make up`; leadgen DEBUG=true)
+	uv run python -m evals.runner --live

@@ -160,9 +160,11 @@ def _process(ctx: Context, run_id: str, lead_id: str, trigger: str, llm: TaggedL
     evidence: list[dict[str, Any]] = []
     derived_fields = {f for f, e in resolution.load_map()["fields"].items()
                       if any(s["action"] == "derive" for s in e["on_missing"])}
+    derived_seen: dict[str, dict[str, Any]] = {}         # a derived value is set on the first pass; keep its record
     for _ in range(8):                                   # resolve -> re-evaluate until nothing new is learned
         a = resolution.analyze(values, ctxv)
         values = a.values
+        derived_seen.update({d["field"]: d for d in a.derived})
         ev = engine.evaluate_all(values, ctx.protocols)
         todo = [f for f in dict.fromkeys([g.field for g in a.gaps] + list(ev.blocked_on))
                 if f not in derived_fields and (f not in attempted or attempted[f].outcome == "pending")]
@@ -177,6 +179,7 @@ def _process(ctx: Context, run_id: str, lead_id: str, trigger: str, llm: TaggedL
             break
     a = resolution.analyze(values, ctxv)
     values = a.values
+    derived_seen.update({d["field"]: d for d in a.derived})
     ev = engine.evaluate_all(values, ctx.protocols)
 
     needed = [g.field for g in a.gaps] + [f for f in ev.blocked_on if f not in derived_fields]
@@ -289,7 +292,7 @@ def _process(ctx: Context, run_id: str, lead_id: str, trigger: str, llm: TaggedL
                        "conditions": r.conditions, "blocked_on": r.blocked_on, "overlays": r.overlays, "path": _path(r)}
                       for r in ev.results],
         "skipped_protocols": ev.skipped, "blocked_on": ev.blocked_on,
-        "assumptions": assumptions, "derived": a.derived, "conflicts": a.conflicts,
+        "assumptions": assumptions, "derived": list(derived_seen.values()), "conflicts": a.conflicts,
         "fetched": [e for e in evidence if e.get("step") == "fetch" and e.get("status") == "found"],
         "lookups": [e for e in evidence if e.get("step") == "lookup"],
         "tool_failures": [e for e in evidence if e.get("step") == "fetch" and e.get("status") != "found"],

@@ -28,7 +28,7 @@ def append_eval_row(eval_run_id: str, seed: int, difficulty: str, n_leads: int,
     (e.g. "protocol=roof_class", "failure_mode=conflict", "tier=hard"); `n_leads` is the slice size.
     New metric columns widen the file (existing rows get blanks)."""
     sv = sv or versioning.system_version()
-    eval_set = {
+    eval_set_info = {
         "set": eval_set, "seed": seed, "difficulty": difficulty, "n_leads": n_leads,
         "leadgen_generator": sv["components"].get("leadgen_generator"),
         "grader": sv["components"].get("grader"),
@@ -41,7 +41,7 @@ def append_eval_row(eval_run_id: str, seed: int, difficulty: str, n_leads: int,
         **metrics,
         "components_json": json.dumps({n: c["version"] for n, c in sv["components"].items()}, sort_keys=True),
         "runtime_config_json": json.dumps(runtime_config or {}, sort_keys=True),
-        "eval_set_json": json.dumps(eval_set, sort_keys=True),
+        "eval_set_json": json.dumps(eval_set_info, sort_keys=True),
     }
     existing: list[dict[str, str]] = []
     if path.exists():
