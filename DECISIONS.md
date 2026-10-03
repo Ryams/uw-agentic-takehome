@@ -64,3 +64,15 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Why:** Auditable, evaluable (a wrong outcome is a wrong value or a wrong tree, never ambiguous which), and avoids repeating/contradicting resolution logic per node.
 
 **How to apply:** Use the `encode-protocol` skill (`.claude/skills/encode-protocol/SKILL.md`). `swimming_pools.json` predates this and needs re-encoding to the new shape (explicit `check`/`on_unexpected`, callout moved to the resolution map).
+
+## D7 - Protocol lifecycle stage: only `quote`-stage components run; post-bind fields are not asked at quote time (2026-10-03)
+
+**Decision:** Each protocol (or component within one) has a `stage`: `quote` (default) or `post_bind`. The engine evaluates only `quote`. Post-bind stages are still encoded (documentation, hit list) with `evaluated_in_poc: false`. Fields that only exist after bind (e.g. trust/LLC questionnaire results) are never requested from the producer at quote time; this is a scoped exception to D3. Triggered by `trusts_and_llcs`.
+
+**Why:** The Trusts & LLCs diagram is mostly post-bind (30-day questionnaire, exposure screen, cancel). Simulating bind events is out of scope for the demo, but the stage concept costs almost nothing and shows the design.
+
+## D8 - All encoding judgement calls live in one log, organized by protocol (2026-10-03)
+
+**Decision:** Every ambiguity, dead end, boundary, mapping or assumption made while encoding is recorded in `sim-harness/protocols/JUDGEMENT_CALLS.md` (per-protocol sections, ids like GP-1, status assumed/confirmed/overruled), not in per-file `open_questions`. Independent root branches of one diagram become separate protocol files; combining results across protocols (most restrictive, conditions merged) is engine config (G-1), not per-file.
+
+**Why:** One place for the underwriter to review and overturn; protocol files stay pure; supports the review conversation about trade-offs.

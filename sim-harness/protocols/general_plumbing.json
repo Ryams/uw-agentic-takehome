@@ -1,0 +1,74 @@
+{
+  "protocol": "general_plumbing",
+  "source_image": "img/plumbing.png",
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (GP)",
+  "applies_when": "always",
+  "stage": "quote",
+  "outcomes": {
+    "OK_TO_QUOTE": {
+      "decision": "quote"
+    },
+    "REQUIRE_PLUMBING_INSPECTION": {
+      "decision": "quote_with_conditions",
+      "condition": "require plumbing inspection within first term"
+    },
+    "DECLINE": {
+      "decision": "decline"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "gp_age",
+    "question": "General Plumbing: older or newer than 30 years?",
+    "fields": [
+      "plumbing_age_years"
+    ],
+    "branches": [
+      {
+        "label": "Older than 30 years",
+        "when": "plumbing_age_years > 30",
+        "then": {
+          "id": "gp_older_tier",
+          "question": "Tier one broker or rounded account?",
+          "fields": [
+            "broker_tier",
+            "has_primary_policy_with_stand"
+          ],
+          "field_note": "'rounded account' mapped to has_primary_policy_with_stand - see open_questions",
+          "branches": [
+            {
+              "label": "Yes",
+              "when": "broker_tier == \"Tier 1\" or has_primary_policy_with_stand == true",
+              "then": {
+                "outcome": "REQUIRE_PLUMBING_INSPECTION"
+              }
+            },
+            {
+              "label": "No",
+              "when": "broker_tier != \"Tier 1\" and has_primary_policy_with_stand == false",
+              "then": {
+                "outcome": "DECLINE"
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
+          }
+        }
+      },
+      {
+        "label": "Newer than 30 years",
+        "when": "plumbing_age_years <= 30",
+        "then": {
+          "outcome": "OK_TO_QUOTE"
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  }
+}

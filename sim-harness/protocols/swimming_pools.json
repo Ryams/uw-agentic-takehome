@@ -1,27 +1,59 @@
 {
   "protocol": "swimming_pools",
   "source_image": "img/swimming_pools.png",
-  "status": "draft - pending UW confirmation of open_questions",
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (SP); pending re-encode to current schema",
   "missing_data_policy": {
     "note": "From diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'",
-    "applies_to": ["pool_type", "pool_security", "pool_has_diving_board_or_slide", "above_ground_pool_ladder", "is_gated_community"],
+    "applies_to": [
+      "pool_type",
+      "pool_security",
+      "pool_has_diving_board_or_slide",
+      "above_ground_pool_ladder",
+      "is_gated_community"
+    ],
     "steps": [
-      { "action": "lookup", "tools": ["google_maps_satellite", "zillow"] },
-      { "action": "if_not_found", "assume": "no / None" }
+      {
+        "action": "lookup",
+        "tools": [
+          "google_maps_satellite",
+          "zillow"
+        ]
+      },
+      {
+        "action": "if_not_found",
+        "assume": "no / None"
+      }
     ]
   },
   "outcomes": {
-    "OK_TO_QUOTE":            { "decision": "quote" },
-    "ACCEPT_REC_COVER":       { "decision": "quote", "condition": "recommend secure cover (non-binding)" },
-    "REQUIRE_COVER":          { "decision": "quote", "condition": "require secured cover within underwriting period" },
-    "REQUIRE_LADDER":         { "decision": "quote", "condition": "require suitable (pull-up, locking) ladder within underwriting period" },
-    "LOL_ENDORSEMENT":        { "decision": "quote", "condition": "attach Limitation of Liability endorsement" }
+    "OK_TO_QUOTE": {
+      "decision": "quote"
+    },
+    "ACCEPT_REC_COVER": {
+      "decision": "quote",
+      "condition": "recommend secure cover (non-binding)"
+    },
+    "REQUIRE_COVER": {
+      "decision": "quote",
+      "condition": "require secured cover within underwriting period"
+    },
+    "REQUIRE_LADDER": {
+      "decision": "quote",
+      "condition": "require suitable (pull-up, locking) ladder within underwriting period"
+    },
+    "LOL_ENDORSEMENT": {
+      "decision": "quote",
+      "condition": "attach Limitation of Liability endorsement"
+    }
   },
   "tree": {
     "id": "pool_present",
     "field": "pool_type",
     "branches": {
-      "None": { "outcome": "OK_TO_QUOTE", "note": "implied by the diagram; no pool -> protocol does not apply" },
+      "None": {
+        "outcome": "OK_TO_QUOTE",
+        "note": "implied by the diagram; no pool -> protocol does not apply"
+      },
       "Inground": {
         "id": "inground_security",
         "field": "pool_security",
@@ -32,8 +64,12 @@
             "field": "pool_fence_self_locking_or_safety_cover",
             "field_status": "NOT IN REGISTRY - ask producer (DECISIONS.md D3)",
             "branches": {
-              "true":  { "outcome": "OK_TO_QUOTE" },
-              "false": { "outcome": "REQUIRE_COVER" }
+              "true": {
+                "outcome": "OK_TO_QUOTE"
+              },
+              "false": {
+                "outcome": "REQUIRE_COVER"
+              }
             }
           },
           "Unfenced": {
@@ -41,8 +77,12 @@
             "field": "is_gated_community",
             "note": "registry field combines 'gated community' and 'multi-acre'; could also be derived from acreage",
             "branches": {
-              "true":  { "outcome": "ACCEPT_REC_COVER" },
-              "false": { "outcome": "REQUIRE_COVER" }
+              "true": {
+                "outcome": "ACCEPT_REC_COVER"
+              },
+              "false": {
+                "outcome": "REQUIRE_COVER"
+              }
             }
           }
         }
@@ -51,8 +91,12 @@
         "id": "ag_ladder",
         "field": "above_ground_pool_ladder",
         "branches": {
-          "true":  { "outcome": "OK_TO_QUOTE" },
-          "false": { "outcome": "REQUIRE_LADDER" }
+          "true": {
+            "outcome": "OK_TO_QUOTE"
+          },
+          "false": {
+            "outcome": "REQUIRE_LADDER"
+          }
         }
       }
     }
@@ -64,12 +108,5 @@
       "outcome": "LOL_ENDORSEMENT",
       "note": "Drawn as a sibling of Inground/Above Ground; treated as an overlay combined with the pool tree result - see open_questions"
     }
-  ],
-  "open_questions": [
-    "Encoding convention: shared diagram nodes are duplicated per path so the protocol is a pure tree (no merging paths).",
-    "I read the Fenced branch as a yes/no question: yes -> Okay to Quote (the shared 'Yes' box), no -> Require Secured Cover (the shared bottom 'No' box). Correct?",
-    "Slides/diving boards: is LoL endorsement an overlay on top of the inground/above-ground result (my assumption), or an exclusive branch that skips the security checks?",
-    "Is 'Accept w/ Recommendation for Secure Cover' a quote with a non-binding note (my assumption), or a UW-review flag?",
-    "'UWing Period' on the ladder box is read as 'underwriting period'."
   ]
 }

@@ -1,0 +1,120 @@
+{
+  "protocol": "water_heaters",
+  "source_image": "img/plumbing.png",
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (WH)",
+  "applies_when": "always",
+  "stage": "quote",
+  "outcomes": {
+    "OK_TO_QUOTE": {
+      "decision": "quote"
+    },
+    "REQUIRE_PLUMBING_INSPECTION": {
+      "decision": "quote_with_conditions",
+      "condition": "require plumbing inspection within first term"
+    },
+    "DECLINE": {
+      "decision": "decline"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "wh_type",
+    "question": "Water Heaters: tank or tankless?",
+    "fields": [
+      "water_heater_type"
+    ],
+    "branches": [
+      {
+        "label": "Tankless",
+        "when": "water_heater_type == \"Tankless\"",
+        "then": {
+          "outcome": "OK_TO_QUOTE"
+        }
+      },
+      {
+        "label": "Tank Heaters",
+        "when": "water_heater_type == \"Tank\"",
+        "then": {
+          "id": "wh_age",
+          "question": "Tank heater: older or newer than 10 years?",
+          "fields": [
+            "water_heater_age_years"
+          ],
+          "branches": [
+            {
+              "label": "Newer than 10 years",
+              "when": "water_heater_age_years <= 10",
+              "diagram_gap": "Box has no outgoing arrow/outcome in the diagram; OK_TO_QUOTE is an assumption - see open_questions",
+              "then": {
+                "outcome": "OK_TO_QUOTE"
+              }
+            },
+            {
+              "label": "Older than 10 years",
+              "when": "water_heater_age_years > 10",
+              "then": {
+                "id": "wh_location",
+                "question": "Where is the water heater located?",
+                "fields": [
+                  "water_heater_location"
+                ],
+                "branches": [
+                  {
+                    "label": "In or Above Finished Space",
+                    "when": "water_heater_location == \"In or Above Finished Space\"",
+                    "then": {
+                      "id": "wh_finished_tier",
+                      "question": "Tier one broker or rounded account?",
+                      "fields": [
+                        "broker_tier",
+                        "has_primary_policy_with_stand"
+                      ],
+                      "branches": [
+                        {
+                          "label": "Yes",
+                          "when": "broker_tier == \"Tier 1\" or has_primary_policy_with_stand == true",
+                          "then": {
+                            "outcome": "REQUIRE_PLUMBING_INSPECTION"
+                          }
+                        },
+                        {
+                          "label": "No",
+                          "when": "broker_tier != \"Tier 1\" and has_primary_policy_with_stand == false",
+                          "then": {
+                            "outcome": "DECLINE"
+                          }
+                        }
+                      ],
+                      "on_unexpected": {
+                        "outcome": "UW_REVIEW"
+                      }
+                    }
+                  },
+                  {
+                    "label": "In Unfinished Space",
+                    "when": "water_heater_location == \"Unfinished Space\"",
+                    "then": {
+                      "outcome": "REQUIRE_PLUMBING_INSPECTION"
+                    }
+                  }
+                ],
+                "on_unexpected": {
+                  "outcome": "UW_REVIEW"
+                }
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
+          }
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  }
+}
