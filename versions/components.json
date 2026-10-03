@@ -91,12 +91,12 @@
     "version": 0
   },
   "protocol_engine": {
-    "content_hash": "96b61a1df749",
+    "content_hash": "c6d94e2ea57c",
     "files": [
       "uw_agent/protocols/engine.py",
       "uw_agent/protocols/expr.py"
     ],
-    "version": 1
+    "version": 2
   },
   "protocol_manifest": {
     "content_hash": "a93d4d9b4ee8",

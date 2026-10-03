@@ -43,6 +43,7 @@ Cross-protocol calls are under "Global".
 
 ## Engine (G-7+)
 - **G-7 (assumed):** "No pool" (`pool_type == "None"`) means the pools protocol does not apply (no outcome), rather than an explicit "OK to quote" branch.
+- **G-9 (assumed):** Conditional asks are collected for every non-ruled-out path (D13), including deep paths (e.g. pool type unknown -> security -> fence detail). The email may therefore contain several "if ..." questions; the composer should keep them short and grouped.
 - **G-8 (assumed):** A decline short-circuits other protocols and suppresses further asks (D11). *Why:* matches the "one crisp message" goal; a declined lead has nothing to gain from more questions. Risk: if the decline was driven by a wrong/assumed value the underwriter sees only that protocol's evidence.
 
 ## Field resolution (R-*)

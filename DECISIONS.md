@@ -117,3 +117,14 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 - The orchestrator (milestone 5) executes steps; only `ask_producer` steps become email asks, and only after fetch/lookup/derive/assume steps fail to produce a value.
 
 **Why:** keeps "how do we get this value" in one reviewable file instead of scattered across protocols and prompts, and keeps the analysis deterministic and testable.
+
+## D13 - Collect downstream blockers on all live paths so one email carries every ask (2026-10-03)
+
+**Decision:** When the walker is blocked at a node, the engine also explores every branch under it that has not been ruled out (`when` evaluates False -> skipped) and returns `conditional_blockers`: each downstream field we would need, with the ordered `only_if` branch conditions under which it matters. Rules:
+- Mirrors the walker: at a node, the first non-False branch decides. If it is True the path is determined (follow only it, no extra condition); if UNKNOWN, every non-False branch is a potential path, tagged with its `when`.
+- If `applies_when` is UNKNOWN, the whole tree (and unknown overlay fields) is explored under the gate condition (e.g. the pool questions only matter if a pool exists).
+- Overlays/independent fields remain unconditional blockers. Fields that are unconditional for any protocol are dropped from the lead-level conditional list; the lead-level list is de-duplicated per (protocol, field, conditions). Decided, not-applicable and declined (short-circuited) protocols contribute nothing.
+- The composer (milestone 4) renders conditional asks only for fields that must be asked of the producer, phrased conditionally ("If the pool is fenced: does it have a self-locking gate or a safety cover?"), so the producer answers everything in one reply. Fetch/lookup/derive steps for conditional fields may run speculatively or lazily (orchestrator's choice). The registry-level `pending` list from `resolution.analyze()` (conditional fields waiting on a parent) is merged into the same conditional-ask list.
+- Evals count a conditional ask as correct when its condition matches the true value; it is not "over-asking" (it is the mechanism that avoids a second email).
+
+**Why:** The spec asks for a single follow-up message containing everything missing, not a drip of rounds. Previously asks for fields behind an unanswered question surfaced only after the reply.

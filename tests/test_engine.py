@@ -191,3 +191,69 @@ def test_every_outcome_reachable(name):
             reached.add(next(o["outcome"] for o in p.data["overlay_rules"] if o["id"] == ov))
     unreachable = set(p.outcomes) - reached - {"UW_REVIEW"}
     assert not unreachable, f"{name}: outcomes never reached: {unreachable}"
+
+
+# --- conditional (downstream) blockers, D13 ---------------------------------------------
+
+def cond(r):
+    """{field: [when-expr paths]} for readable assertions."""
+    out = {}
+    for c in r.conditional_blockers:
+        out.setdefault(c.field, []).append([x["when"] for x in c.only_if])
+    return out
+
+
+def test_pool_type_unknown_collects_every_downstream_path():
+    r = run("swimming_pools")  # nothing known
+    assert r.blocked_on == ["pool_type"]
+    c = cond(r)
+    gate = 'pool_type != "None"'
+    assert c["pool_security"] == [[gate, 'pool_type == "Inground"']]
+    assert c["above_ground_pool_ladder"] == [[gate, 'pool_type == "Above Ground"']]
+    assert c["pool_fence_self_locking_or_safety_cover"] == [[gate, 'pool_type == "Inground"', 'pool_security == "Fenced"']]
+    assert c["is_gated_community"] == [[gate, 'pool_type == "Inground"', 'pool_security == "Unfenced"']]
+    assert c["pool_has_diving_board_or_slide"] == [[gate]]
+
+
+def test_branches_already_ruled_out_are_not_explored():
+    r = run("swimming_pools", pool_type="Above Ground")
+    assert r.blocked_on == ["above_ground_pool_ladder", "pool_has_diving_board_or_slide"]
+    assert cond(r) == {}                                    # nothing hides behind the ladder answer
+    r = run("swimming_pools", pool_type="Inground", pool_has_diving_board_or_slide=False)  # security missing
+    assert r.blocked_on == ["pool_security"]
+    c = cond(r)
+    assert set(c) == {"pool_fence_self_locking_or_safety_cover", "is_gated_community"}
+    assert "above_ground_pool_ladder" not in c               # Above Ground branch is False
+    r = run("swimming_pools", pool_type="Inground", pool_security="Unfenced", pool_has_diving_board_or_slide=False)
+    assert r.status == "blocked" and r.blocked_on == ["is_gated_community"] and cond(r) == {}  # Fenced branch ruled out
+
+
+def test_determined_path_is_followed_through_to_deeper_blockers():
+    # age > 30 and tier known -> decided; no conditionals.  age unknown -> broker fields only matter if > 30.
+    r = run("general_plumbing", broker_tier="Tier 2")
+    assert r.blocked_on == ["plumbing_age_years"]
+    assert cond(r) == {"has_primary_policy_with_stand": [["plumbing_age_years > 30"]]}
+    r = run("water_heaters", water_heater_type=None)
+    assert r.blocked_on == ["water_heater_type"]
+    c = cond(r)
+    assert c["water_heater_age_years"] == [['water_heater_type == "Tank"']]
+    assert c["water_heater_location"] == [['water_heater_type == "Tank"', "water_heater_age_years > 10"]]
+    assert set(c["broker_tier"][0]) == {'water_heater_type == "Tank"', "water_heater_age_years > 10",
+                                        'water_heater_location == "In or Above Finished Space"'}
+
+
+def test_decided_or_not_applicable_protocols_have_no_conditional_blockers():
+    assert run("swimming_pools", pool_type="None").conditional_blockers == []
+    assert run("general_plumbing", plumbing_age_years=10).conditional_blockers == []
+
+
+def test_lead_level_conditional_blockers_exclude_unconditional_and_dedupe():
+    ev = engine.evaluate_all({"plumbing_age_years": None})
+    assert ev.status == "blocked"
+    unconditional = set(ev.blocked_on)
+    assert all(c.field not in unconditional for c in ev.conditional_blockers)
+    # broker_tier is conditional for general_plumbing and for water_heaters; each keeps its own path
+    paths = [(c.protocol, c.field) for c in ev.conditional_blockers]
+    assert len(paths) == len(set((c.protocol, c.field, tuple(x["when"] for x in c.only_if)) for c in ev.conditional_blockers))
+    ev2 = engine.evaluate_all({"plumbing_age_years": 40, "broker_tier": "Tier 3", "has_primary_policy_with_stand": False})
+    assert ev2.decision == "decline" and ev2.conditional_blockers == []                   # decline: no more asks

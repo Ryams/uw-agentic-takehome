@@ -28,6 +28,19 @@ class PathStep:
 
 
 @dataclass
+class ConditionalBlocker:
+    """A field we will need only if the lead turns out to take a particular path.
+
+    `only_if` is the ordered list of branch conditions that must hold for the field to
+    matter, e.g. [{"node": "inground_security", "branch": "Fenced ...", "when": 'pool_security == "Fenced"'}].
+    Collected so ALL asks can go out in one message (D13); branches already ruled out are never explored.
+    """
+    field: str
+    only_if: list[dict[str, str]]
+    protocol: str = ""
+
+
+@dataclass
 class ProtocolResult:
     protocol: str
     status: str  # decided | blocked | not_applicable
@@ -36,6 +49,7 @@ class ProtocolResult:
     conditions: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
     blocked_on: list[str] = field(default_factory=list)
+    conditional_blockers: list[ConditionalBlocker] = field(default_factory=list)
     path: list[PathStep] = field(default_factory=list)
     overlays: list[str] = field(default_factory=list)
 
@@ -48,6 +62,7 @@ class LeadEvaluation:
     recommendations: list[str]
     blocked_on: list[str]
     results: list[ProtocolResult]
+    conditional_blockers: list[ConditionalBlocker] = field(default_factory=list)
     short_circuited_by: Optional[str] = None
     skipped: list[str] = field(default_factory=list)
 
@@ -82,6 +97,18 @@ def load_protocols(directory: Path = PROTOCOLS_DIR, only_runnable: bool = True) 
             continue
         out.append(Protocol(json.loads((directory / e["file"]).read_text()), e))
     return out
+
+
+def _find_node(tree: dict[str, Any], node_id: str) -> dict[str, Any]:
+    if tree["id"] == node_id:
+        return tree
+    for b in tree["branches"]:
+        if "outcome" not in b["then"]:
+            try:
+                return _find_node(b["then"], node_id)
+            except KeyError:
+                pass
+    raise KeyError(node_id)
 
 
 def _apply_outcome(proto: Protocol, res: ProtocolResult, outcome_id: str) -> None:
@@ -120,6 +147,50 @@ def _walk(proto: Protocol, node: dict[str, Any], values: dict[str, Any], res: Pr
         node = nxt
 
 
+def _explore(proto: Protocol, node: dict[str, Any], values: dict[str, Any], conds: list[dict[str, str]],
+             out: list[ConditionalBlocker], record_here: bool) -> None:
+    """Collect blockers on every path not already ruled out (D13).
+
+    Mirrors the walker: the first branch that is not False decides. If it is True the path
+    is determined (follow only it); if UNKNOWN, every non-False branch is a potential path.
+    `record_here=False` is used for the node that is already blocked (its fields are
+    unconditional blockers, reported separately).
+    """
+    first = None
+    for br in node["branches"]:
+        v = proto.expr(br["when"]).evaluate(values)
+        if v is not False:
+            first = (br, v)
+            break
+    if first is None:
+        return
+    if first[1] is True:
+        nxt = first[0]["then"]
+        if "outcome" not in nxt:
+            _explore(proto, nxt, values, conds, out, True)
+        return
+    if record_here:
+        for f in sorted(proto.expr(first[0]["when"]).unknown_fields(values)):
+            out.append(ConditionalBlocker(f, list(conds), proto.name))
+    for br in node["branches"]:
+        e = proto.expr(br["when"])
+        v = e.evaluate(values)
+        if v is False or "outcome" in br["then"]:
+            continue
+        step = {"node": node["id"], "branch": br["label"], "when": br["when"]} if v is UNKNOWN else None
+        _explore(proto, br["then"], values, conds + ([step] if step else []), out, True)
+
+
+def _dedupe_conditional(items: list[ConditionalBlocker]) -> list[ConditionalBlocker]:
+    seen, out = set(), []
+    for c in items:
+        key = (c.protocol, c.field, tuple(x["when"] for x in c.only_if))
+        if key not in seen:
+            seen.add(key)
+            out.append(c)
+    return out
+
+
 def evaluate_protocol(proto: Protocol, values: dict[str, Any]) -> ProtocolResult:
     res = ProtocolResult(proto.name, "decided")
     gate = proto.applies_when.evaluate(values)
@@ -129,6 +200,15 @@ def evaluate_protocol(proto: Protocol, values: dict[str, Any]) -> ProtocolResult
     if gate is UNKNOWN:
         res.status = "blocked"
         res.blocked_on = sorted(proto.applies_when.unknown_fields(values))
+        gate_cond = [{"node": "applies_when", "branch": "protocol applies", "when": proto.applies_when.source}]
+        cond: list[ConditionalBlocker] = []
+        for tree in proto.trees:
+            _explore(proto, {"id": "applies_when", "branches": [{"label": "protocol applies", "when": "true", "then": tree}]},
+                     values, [], cond, False)
+        for _, e in proto.overlays:
+            cond += [ConditionalBlocker(f, [], proto.name) for f in sorted(e.unknown_fields(values))]
+        res.conditional_blockers = _dedupe_conditional([
+            ConditionalBlocker(c.field, gate_cond + c.only_if, proto.name) for c in cond])
         return res
 
     blocked: set[str] = set()
@@ -138,6 +218,8 @@ def evaluate_protocol(proto: Protocol, values: dict[str, Any]) -> ProtocolResult
         res.path += sub.path
         if sub.blocked_on:
             blocked |= set(sub.blocked_on)
+            blocked_node = _find_node(tree, sub.path[-1].node)
+            _explore(proto, blocked_node, values, [], res.conditional_blockers, False)
         elif sub.decision:
             res.outcome, res.decision = sub.outcome, sub.decision
             res.conditions += sub.conditions
@@ -157,6 +239,7 @@ def evaluate_protocol(proto: Protocol, values: dict[str, Any]) -> ProtocolResult
             if res.decision and SEVERITY.index(o["decision"]) < SEVERITY.index(res.decision):
                 res.decision = o["decision"]
 
+    res.conditional_blockers = _dedupe_conditional(res.conditional_blockers)
     if blocked:
         res.status, res.blocked_on = "blocked", sorted(blocked)
         res.outcome = res.decision = None
@@ -190,11 +273,13 @@ def evaluate_all(values: dict[str, Any], protocols: Optional[list[Protocol]] = N
     if short:
         # A decline stands regardless of what else is unknown; do not ask for more.
         return LeadEvaluation("decided", "decline", _dedupe([c for r in decided for c in r.conditions]), [],
-                              [], results, short, skipped)
+                              [], results, [], short, skipped)
     status = "blocked" if blocked_on else "decided"
+    conditional = [c for r in results if r.status == "blocked" for c in r.conditional_blockers
+                   if c.field not in blocked_on]
     return LeadEvaluation(
         status, decision,
         _dedupe([c for r in decided for c in r.conditions]),
         _dedupe([c for r in decided for c in r.recommendations]),
-        blocked_on, results, None, skipped,
+        blocked_on, results, _dedupe_conditional(conditional), None, skipped,
     )
