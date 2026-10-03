@@ -133,6 +133,20 @@ def create_app(ctx: orch.Context, simulate: Optional[Callable[[list[str], str], 
         out = orch.poll_replies(ctx, run_id) if n else []
         return {"replies": n, "reprocessed": [o.lead_id for o in out]}
 
+    @app.post("/api/runs/{run_id}/leads/{lead_id}/simulate_reply")
+    def sim_one(run_id: str, lead_id: str, req: Reply) -> dict[str, Any]:
+        """Demo only: the producer simulator answers THIS lead's outstanding email, and the agent processes the reply."""
+        lead_or_404(run_id, lead_id)
+        if simulate is None:
+            raise HTTPException(501, "reply simulation is not configured")
+        replied = {e["in_reply_to"] for e in db.emails(run_id, lead_id, "in")}
+        if not any(e["status"] == "sent" and e["id"] not in replied for e in db.emails(run_id, lead_id, "out")):
+            raise HTTPException(409, "no sent email is waiting for a reply")
+        n = simulate([lead_id], req.mode)
+        if n:
+            orch.poll_replies(ctx, run_id)
+        return {"replies": n, **detail(run_id, lead_id)}
+
     # --- lead detail ----------------------------------------------------------------------------------
     @app.get("/api/runs/{run_id}/leads/{lead_id}")
     def detail(run_id: str, lead_id: str) -> dict[str, Any]:

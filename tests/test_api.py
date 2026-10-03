@@ -148,3 +148,23 @@ def test_approve_quick_wins_only_touches_clean_leads(env):
     assert all(after[x]["state"] == "actioned" for x in done)
     assert all(l["state"] != "actioned" for k, l in after.items() if k not in done)       # conditions/conflicts untouched
     assert c.post(f"/api/runs/{rid}/approve_quick_wins").json() == {"approved": []}       # idempotent
+
+
+def test_simulate_reply_for_one_lead_completes_just_that_lead(env):
+    w, c = env
+    rid = start(c)
+    waiting = [l["lead_id"] for l in c.get(f"/api/runs/{rid}/queue").json()["leads"] if l["state"] == "awaiting_reply"]
+    assert len(waiting) >= 2
+    one, other = waiting[0], waiting[1]
+    r = c.post(f"/api/runs/{rid}/leads/{one}/simulate_reply", json={"mode": "complete"}).json()
+    assert r["replies"] == 1 and r["card"]["state"] in ("ready_to_quote", "needs_uw")        # this lead moved on
+    assert any(e["direction"] == "in" for e in r["emails"])
+    states = {l["lead_id"]: l["state"] for l in c.get(f"/api/runs/{rid}/queue").json()["leads"]}
+    assert states[other] == "awaiting_reply"                                                  # the others still wait
+    again = c.post(f"/api/runs/{rid}/leads/{one}/simulate_reply", json={"mode": "complete"})
+    assert again.status_code in (200, 409) and (again.status_code == 409 or again.json()["replies"] == 0)
+    nothing = next(l["lead_id"] for l in c.get(f"/api/runs/{rid}/queue").json()["leads"] if l["state"] == "ready_to_quote") \
+        if any(l["state"] == "ready_to_quote" for l in c.get(f"/api/runs/{rid}/queue").json()["leads"]) else None
+    if nothing:
+        assert c.post(f"/api/runs/{rid}/leads/{nothing}/simulate_reply", json={"mode": "complete"}).status_code == 409
+    assert c.post(f"/api/runs/{rid}/leads/NOPE/simulate_reply", json={"mode": "complete"}).status_code == 404

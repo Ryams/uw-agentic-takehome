@@ -244,9 +244,11 @@ function detailHtml(d) {
   if (d.uw_actions.length) h += `<h3>Your actions</h3>` + d.uw_actions.map(x => `<div class="muted mono">${esc(x.action)} ${esc(JSON.stringify(Object.fromEntries(Object.entries(x.payload).filter(([k]) => !k.startsWith("agent_") && k !== "action"))))}</div>`).join("");
   h += `</div><div class="actions">`;
   const canApprove = ["quote", "quote_with_conditions", "decline"].includes(c.decision) && !c.uw_status;
+  const waiting = d.emails.some(m => m.direction === "out" && m.status === "sent") && c.state === "awaiting_reply";
   h += `<button class="btn ${c.decision === "decline" ? "bad" : "good"}" id="approve" ${canApprove ? "" : "disabled"}>${c.decision === "decline" ? "Approve decline" : "Approve quote"}</button>
     <select id="ovd"><option value="">Override decision…</option><option value="quote">Quote</option><option value="quote_with_conditions">Quote with conditions</option><option value="decline">Decline</option></select>
-    <button class="btn" id="rerun">Re-run</button><button class="btn" id="note">Add note</button></div>`;
+    <button class="btn" id="rerun">Re-run</button><button class="btn" id="note">Add note</button>
+    ${waiting ? `<span style="margin-left:auto" class="inline"><select id="simmode" title="Demo: how the simulated producer answers"><option value="complete">answers everything</option><option value="partial">leaves one unanswered</option></select><button class="btn primary" id="simone" title="Demo only: the producer simulator replies to this lead's email">Simulate producer reply</button></span>` : ""}</div>`;
   return h;
 }
 async function loadDetail(id, scroll) {
@@ -258,6 +260,9 @@ async function loadDetail(id, scroll) {
   const ap = $("#approve"); if (ap) ap.onclick = () => run({ action: "approve" }, "Approved");
   $("#ovd").onchange = e => { const v = e.target.value; if (!v) return; const note = prompt("Why are you overriding the agent? (required)"); if (note) run({ action: "override_decision", decision: v, note }, "Decision overridden"); else e.target.value = ""; };
   $("#rerun").onclick = () => run({ action: "reprocess" }, "Re-run");
+  const so = $("#simone"); if (so) so.onclick = async () => {
+    try { const r = await api(`/api/runs/${state.run.run_id}/leads/${id}/simulate_reply`, { method: "POST", body: { mode: $("#simmode").value } });
+      toast(r.replies ? "Producer replied; the agent processed it" : "No outstanding email to answer"); await refresh(); } catch (e) { toast(e.message); } };
   $("#note").onclick = () => { const note = prompt("Note"); if (note) run({ action: "note", note }, "Note saved"); };
   p.querySelectorAll("[data-send]").forEach(x => x.onclick = () => run({ action: "send_draft", email_id: +x.dataset.send }, "Email sent"));
   p.querySelectorAll("[data-save]").forEach(x => x.onclick = () => run({ action: "edit_draft", email_id: +x.dataset.save, body: $("#draft-" + x.dataset.save).value }, "Draft saved"));
