@@ -1,0 +1,667 @@
+{
+  "_comment": "Field resolution map (D6): how to obtain/validate each field. Generated once from registry metadata (system-owned -> fetch/derive, producer always/conditional -> ask_producer, bind_only -> defer) then hand-edited with playbook overrides. Steps run in order until a value is obtained. Actions: fetch{tool}, lookup{tool,default}, derive{from,table}, assume{value,when?}, ask_producer, defer_to_bind, post_bind_only. Judgement calls: sim-harness/protocols/JUDGEMENT_CALLS.md (R-*).",
+  "context_values": {
+    "current_year": "calendar year of the lead's received_at"
+  },
+  "fields": {
+    "street_address": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "city": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "county": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "state": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "zip": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "broker_tier": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "crm_account"
+        }
+      ]
+    },
+    "has_primary_policy_with_stand": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "crm_account"
+        }
+      ]
+    },
+    "listed_for_sale": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "first_name": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "last_name": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "residence_held_in_trust": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "trust_name": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "owner_email": {
+      "on_missing": [
+        {
+          "action": "defer_to_bind"
+        }
+      ]
+    },
+    "owner_phone_number": {
+      "on_missing": [
+        {
+          "action": "defer_to_bind"
+        }
+      ]
+    },
+    "insured_dob": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "occupation": {
+      "on_missing": [
+        {
+          "action": "defer_to_bind"
+        }
+      ]
+    },
+    "number_of_residents": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "kyc_score": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "kyc_provider"
+        }
+      ]
+    },
+    "effective_date": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "coverage_a": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "coverage_e": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "coverage_f": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "replacement_cost": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "rce_provider"
+        }
+      ]
+    },
+    "dwelling_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "dwelling_use_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "is_rental": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "months_unoccupied": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "year_built": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "property_purchase_date": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "pool_type": {
+      "on_missing": [
+        {
+          "action": "lookup",
+          "tool": "maps_zillow",
+          "topic": "pool_type",
+          "default": "None",
+          "rationale": "no pool seen -> assume no pool"
+        }
+      ],
+      "source": "Pools diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'"
+    },
+    "pool_security": {
+      "on_missing": [
+        {
+          "action": "lookup",
+          "tool": "maps_zillow",
+          "topic": "pool_security",
+          "default": "Unfenced",
+          "rationale": "no fence seen -> assume unfenced (conservative)"
+        }
+      ],
+      "source": "Pools diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'"
+    },
+    "pool_has_diving_board_or_slide": {
+      "on_missing": [
+        {
+          "action": "lookup",
+          "tool": "maps_zillow",
+          "topic": "pool_has_diving_board_or_slide",
+          "default": false,
+          "rationale": "no slide/board seen -> assume none"
+        }
+      ],
+      "source": "Pools diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'"
+    },
+    "above_ground_pool_ladder": {
+      "on_missing": [
+        {
+          "action": "lookup",
+          "tool": "maps_zillow",
+          "topic": "above_ground_pool_ladder",
+          "default": false,
+          "rationale": "no ladder seen -> assume none"
+        }
+      ],
+      "source": "Pools diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'"
+    },
+    "is_gated_community": {
+      "on_missing": [
+        {
+          "action": "lookup",
+          "tool": "maps_zillow",
+          "topic": "is_gated_community",
+          "default": false,
+          "rationale": "no gate/acreage seen -> assume not gated"
+        }
+      ],
+      "source": "Pools diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'"
+    },
+    "acreage": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "has_animals": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "structure_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "construction_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "siding_material": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "foundation_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "post_pier_supports_living_area": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "deck_height_ft": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "square_feet": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "num_stories": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "roof_replacement_year": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "roof_material": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "roof_shape": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "heating_source": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "has_knob_and_tube_wiring": {
+      "on_missing": [
+        {
+          "action": "assume",
+          "value": true,
+          "when": "year_built < 1950",
+          "rationale": "registry missingDefault: assume knob & tube if built before 1950"
+        },
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "electrical_panel_brand": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "electrical_panel_size_amps": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "plumbing_age_years": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "water_heater_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "water_heater_age_years": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "water_heater_location": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "fire_alarm": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "distance_to_fire_department": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "fire_department_type": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "dist_to_nearest_fire_hydrant": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "opening_protection": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "road_access": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "geo_risk"
+        }
+      ]
+    },
+    "protection_class": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "ppc_lookup"
+        },
+        {
+          "action": "assume",
+          "value": "9",
+          "rationale": "registry missingDefault: assume PC 9 when the PPC lookup fails"
+        }
+      ]
+    },
+    "fire_dept_response_time": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "alternative_water_source": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "interior_sprinklers": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "physical_barriers": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "min_distance_to_neighbor_ft": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "geo_risk"
+        }
+      ]
+    },
+    "is_7a_compliant": {
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ]
+    },
+    "slope_angle_deg": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "geo_risk"
+        }
+      ]
+    },
+    "roof_classification": {
+      "on_missing": [
+        {
+          "action": "derive",
+          "from": "roof_material",
+          "table": {
+            "Architecture Shingles": "Class A",
+            "Asphalt Fiberglass Composite": "Class A",
+            "Clay Tile": "Class A",
+            "Concrete Tile": "Class A",
+            "Metal Shingles / Sheets": "Class A",
+            "Slate": "Class A",
+            "Standing Seam Metal": "Class A",
+            "Wood Shake": "Class C",
+            "Wood Shingle": "Class C",
+            "Other": "Class B"
+          }
+        }
+      ]
+    },
+    "p_f": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "geo_risk"
+        }
+      ]
+    },
+    "siding_classification": {
+      "on_missing": [
+        {
+          "action": "derive",
+          "from": "siding_material",
+          "table": {
+            "Brick / Masonry Veneer": "A",
+            "Fire Resistive": "A",
+            "Cement Fiber": "B",
+            "Stucco": "B",
+            "Aluminum / Steel": "C",
+            "Vinyl": "C",
+            "Wood": "D",
+            "Wood Shake / Shingle": "D",
+            "Other": "C"
+          }
+        }
+      ]
+    },
+    "vegetation_clearance": {
+      "on_missing": [
+        {
+          "action": "fetch",
+          "tool": "geo_risk"
+        }
+      ]
+    },
+    "pool_fence_self_locking_or_safety_cover": {
+      "label": "Pool fence has a self-locking gate, or the pool has a safety cover",
+      "type": {
+        "kind": "toggle"
+      },
+      "on_missing": [
+        {
+          "action": "ask_producer"
+        }
+      ],
+      "source": "swimming_pools protocol; not in registry, asked of the producer (D3)"
+    },
+    "trust_llc_questionnaire_status": {
+      "label": "Trust & LLC questionnaire status",
+      "type": {
+        "kind": "select",
+        "options": [
+          "received_within_30_days",
+          "not_received_within_30_days"
+        ]
+      },
+      "on_missing": [
+        {
+          "action": "post_bind_only"
+        }
+      ],
+      "source": "trusts_and_llcs_post_bind (D7)"
+    },
+    "trust_llc_unacceptable_exposure_found": {
+      "label": "Unacceptable exposures found in trust/LLC questionnaire",
+      "type": {
+        "kind": "toggle"
+      },
+      "on_missing": [
+        {
+          "action": "post_bind_only"
+        }
+      ],
+      "source": "trusts_and_llcs_post_bind (D7)"
+    }
+  },
+  "conflicts": [
+    {
+      "id": "unoccupied_but_primary",
+      "when": "months_unoccupied >= 3 and dwelling_use_type == \"Primary\"",
+      "message": "unoccupied for 3+ months but claims primary residence"
+    },
+    {
+      "id": "short_term_rental_but_primary",
+      "when": "is_rental == \"Short-Term Rentals\" and dwelling_use_type == \"Primary\"",
+      "message": "runs short-term rentals but claims primary residence"
+    },
+    {
+      "id": "owner_occupied_but_secondary",
+      "when": "dwelling_use_type == \"Secondary\" and dwelling_type in (\"Owner Occupied Single Family Residence\", \"Owner Occupied Multi Family Residence\")",
+      "message": "owner-occupied dwelling type but use type is secondary"
+    },
+    {
+      "id": "zero_residents_owner_occupied",
+      "when": "number_of_residents < 1 and dwelling_type in (\"Owner Occupied Single Family Residence\", \"Owner Occupied Multi Family Residence\")",
+      "message": "zero residents for an owner-occupied dwelling"
+    },
+    {
+      "id": "roof_year_in_future",
+      "when": "roof_replacement_year > current_year",
+      "message": "roof replacement year is in the future"
+    },
+    {
+      "id": "implausible_service_size",
+      "when": "electrical_panel_size_amps < 60",
+      "message": "implausibly small electrical service"
+    },
+    {
+      "id": "zero_acreage",
+      "when": "acreage <= 0",
+      "message": "zero acreage"
+    }
+  ]
+}

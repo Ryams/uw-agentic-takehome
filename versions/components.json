@@ -44,9 +44,11 @@
     "version": 0
   },
   "normalizer": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "ef61b5fe307d",
+    "files": [
+      "uw_agent/normalize.py"
+    ],
+    "version": 1
   },
   "orchestrator": {
     "content_hash": "empty",
@@ -104,9 +106,12 @@
     "version": 1
   },
   "resolver": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "70ced91df132",
+    "files": [
+      "sim-harness/shared/field_resolution.json",
+      "uw_agent/resolution.py"
+    ],
+    "version": 1
   },
   "summarizer": {
     "content_hash": "empty",
