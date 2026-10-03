@@ -1,4 +1,4 @@
-.PHONY: ui-cc eval-cc smoke-cc run-cc setup up down test smoke-llm run demo-offline ui ui-offline eval eval-offline eval-live
+.PHONY: down ui-cc eval-cc smoke-cc run-cc setup up down test smoke-llm run demo-offline ui ui-offline eval eval-offline eval-live
 
 setup:            ## install deps + enable the version-bump pre-commit hook
 	uv sync
@@ -7,8 +7,9 @@ setup:            ## install deps + enable the version-bump pre-commit hook
 up:               ## start leadgen (:8081, DEBUG=true for the answer key) + mailbox (:8025)
 	cd sim-harness && DEBUG=true docker compose up --build -d
 
-down:
+down:             ## stop the docker services AND any UI server started by `make ui*`
 	cd sim-harness && docker compose down
+	@pkill -f "uw_agent.server:make_app" && echo "stopped UI server" || true
 
 test:
 	uv run pytest -q
