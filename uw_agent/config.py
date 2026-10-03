@@ -27,6 +27,10 @@ class Settings:
     mailbox_url: str
     vendors_url: str
 
+    def model_for(self, task: str) -> str:
+        """Per-task override (ANTHROPIC_MODEL_INTERPRETER / _COMPOSER / _SUMMARIZER), else the default."""
+        return os.environ.get(f"ANTHROPIC_MODEL_{task.upper()}", "").strip() or self.anthropic_model
+
     @property
     def anthropic_api_key(self) -> str:
         key = os.environ.get("ANTHROPIC_API_KEY", "").strip()

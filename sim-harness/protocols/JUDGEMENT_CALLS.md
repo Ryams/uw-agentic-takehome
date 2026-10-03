@@ -74,3 +74,8 @@ Cross-protocol calls are under "Global".
 
 ## Global additions
 - **G-10 (assumed):** Sticky notes and callouts are captured verbatim in the protocol's `sticky_notes` (with `applies_to` and, where they became machine rules, `handled_in`), so an LLM reasoning over a missing/ambiguous value can read the playbook text (D15).
+
+## LLM edges (L-*)
+- **L-1 (assumed):** Ambiguous or unclear imagery does not set a value. The playbook default ("assume no") applies, and the assumption is flagged low-confidence for the underwriter instead of asking the producer. *Why:* the callout says assume no when nothing conclusive is seen; asking would add emails the playbook does not call for. Revisit if wrong assumptions are costly.
+- **L-2 (assumed):** The default model for all three LLM tasks is `claude-sonnet-5-5` at `low` effort (cost-conscious, tasks are short and constrained); override per task via env. The eval milestone should compare models/efforts on the same fixed sets.
+- **L-3 (assumed):** The composer addresses the producer generically ("Hello,"); quote conditions (e.g. "confirm Class A within 60 days") appear on the dashboard and quote, not in the follow-up email, which asks only for missing information.

@@ -1,4 +1,4 @@
-.PHONY: setup up down test
+.PHONY: setup up down test smoke-llm
 
 setup:            ## install deps + enable the version-bump pre-commit hook
 	uv sync
@@ -12,3 +12,6 @@ down:
 
 test:
 	uv run pytest -q
+
+smoke-llm:        ## live check of the 3 LLM edges (needs ANTHROPIC_API_KEY in .env)
+	uv run python -m uw_agent.smoke_llm

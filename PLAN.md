@@ -6,7 +6,7 @@
 > - [x] 1. Protocols + linter + engine (done; D11) (encoded: pools, general_plumbing, water_heaters, roof_class, siding, trusts_and_llcs_quote; trusts_and_llcs_post_bind disabled; see protocols/manifest.json, D9)
 > - [x] 2. Pre-processing + resolution (done; D12)
 > - [x] 3. Tools (mock vendors service, fetch, lookup; D19)
-> - [ ] 4. LLM edges
+> - [x] 4. LLM edges (done offline-tested; live smoke test pending API key; D20)
 > - [ ] 5. Orchestrator + state + reply loop
 > - [ ] 6. API + web UI
 > - [ ] 7. Evals

@@ -1,13 +1,19 @@
 {
   "email_composer": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "8c51b77f92a2",
+    "files": [
+      "uw_agent/composer.py",
+      "uw_agent/prompts/composer.md"
+    ],
+    "version": 1
   },
   "evidence_interpreter": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "c1ec12e782a7",
+    "files": [
+      "uw_agent/interpreter.py",
+      "uw_agent/prompts/interpreter.md"
+    ],
+    "version": 1
   },
   "field_registry": {
     "content_hash": "234f590abd48",
@@ -35,9 +41,11 @@
     "version": 1
   },
   "llm_client": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "db5a018a69a8",
+    "files": [
+      "uw_agent/llm.py"
+    ],
+    "version": 1
   },
   "lookup_tools": {
     "content_hash": "bf340ce5e386",
@@ -147,8 +155,11 @@
     "version": 2
   },
   "summarizer": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "828f58726476",
+    "files": [
+      "uw_agent/prompts/summarizer.md",
+      "uw_agent/summarizer.py"
+    ],
+    "version": 1
   }
 }
