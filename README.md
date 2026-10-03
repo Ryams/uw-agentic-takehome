@@ -136,25 +136,20 @@ Building the set also found a normalizer bug that would have re-asked a pool-fen
 
 ---
 
-## 5. Skills
+## 5. Skills and tools
 
 ### Implemented
 
-| Skill | What it does | When it fires |
+Only capabilities an agent can be given are listed. The model does not choose among them: the pipeline invokes each one under a fixed condition (D20, D25), so "when it fires" is a pipeline condition, not a model decision. The deterministic stages (normalizer, gap classifier, playbook engine, derivation and conflict rules, orchestrator, eval harness) are architecture, not skills; they are described in section 3.
+
+| Skill / tool | What it does | When it fires |
 |---|---|---|
-| **Normalize** | Coerces types, treats `"Unknown"`/`N/A`/empty as missing, keeps playbook-only fields | every lead, every round |
-| **Gap classification** | Per registry field: fetch, ask, defer to bind, derive, or verify (honours `requiredWhen`) | every lead |
-| **Playbook engine** | Walks the 6 encoded decision trees, applies overlays, combines results most-restrictive-first, reports every blocker on every live path | every lead, after each new fact |
 | **Field fetch** (mock CRM, KYC, replacement cost, PPC, geo/fire risk) | Fills system-owned fields | when a field is missing and the map says fetch |
 | **Imagery / listing lookup + interpreter** (Claude) | Reads Maps/Zillow evidence text into a value; "nothing seen" applies the playbook default, anything unclear is asked | pool and gate fields |
-| **Derivation** | Roof and siding class from material and age by playbook rules | when inputs are known |
-| **Conflict detection** | Flags internally inconsistent data for the underwriter | every lead |
 | **Email composer** (Claude) | One merged, minimal follow-up with conditional questions; validated, retried, template fallback | when asks remain |
 | **Reply parser** (Claude for free text) | Maps a reply to fields; "N/A" is remembered so nothing is re-asked | on each inbound reply |
 | **Summarizer** (Claude) | Plain-language "what passes, what is outstanding, what I need from you" per lead | every decision round |
-| **Orchestrator** | Parallel, idempotent processing, reply polling, prioritisation, clean-slate runs | queue run and replies |
-| **Underwriter actions** | Approve, override (note required), provide value, review/edit/send draft, re-run, note, approve quick wins | UI |
-| **Eval harness** | Grader, fixed and seeded sets, per-slice metrics, compare | `make eval` |
+| **`encode-protocol`** (Agent Skill, build-time; `.claude/skills/encode-protocol/SKILL.md`) | Turns a playbook diagram image into a validated JSON decision tree: maps labels to registry fields, duplicates shared nodes, logs judgement calls, updates the manifest | when a coding agent is given a new diagram. This is the only skill in the formal Agent Skills sense; it is used to build the playbook, not at run time |
 
 Playbooks encoded: swimming pools, general plumbing, water heaters, roof class, siding, trusts and LLCs (quote stage; the post-bind half is encoded but disabled).
 
