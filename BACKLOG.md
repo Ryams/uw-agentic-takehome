@@ -20,6 +20,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [core] JSON tree evaluator: field lookup, branch, outcome, "blocked on unknown field" result
 - [core] Encode 3-4 protocols (pools done; pick others from Occupancy, Roof Class, Post & Pier, Electrical, Plumbing)
 - [core] Standard result shape: outcome, conditions, blocking fields, evidence trail
+- [next] When choosing the next protocols: check for cross-protocol dependencies (one protocol's computed value or outcome feeding another, e.g. fire simulation -> roof); if found, add `depends_on`/`produces` to the manifest and run protocols in dependency order
 - [hit list] Remaining ~8 protocols, UW-editable protocol authoring
 
 ## Tools / integrations (mostly stubbed)
