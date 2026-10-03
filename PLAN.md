@@ -3,7 +3,7 @@
 > Saved from the planning session. **Progress checklist** (update after each milestone; pause after each for a context check):
 > - [x] 0. Harness changes (clean_fields) + project skeleton (done; see sim-harness/CHANGES.md)
 > - [x] 0b. Versioning + run records (done; D10)
-> - [ ] 1. Protocols + linter + engine (encoded: pools [re-encode to current schema], general_plumbing, water_heaters, trusts_and_llcs_quote; trusts_and_llcs_post_bind disabled; see protocols/manifest.json, D9)
+> - [x] 1. Protocols + linter + engine (done; D11) (encoded: pools [re-encode to current schema], general_plumbing, water_heaters, trusts_and_llcs_quote; trusts_and_llcs_post_bind disabled; see protocols/manifest.json, D9)
 > - [ ] 2. Pre-processing + resolution
 > - [ ] 3. Tools (world, fetch, lookup)
 > - [ ] 4. LLM edges

@@ -96,3 +96,14 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 - The generator is a tracked component because a seed only means the same queue for the same generator code/config (we modified it, D5).
 
 **Trade-offs (accepted):** any content change (even whitespace/comments) bumps the version (content-driven by design). The hook hashes the working tree, not the staged snapshot, so partial staging can mismatch (the test catches it). Model id and other env runtime settings are recorded per run, not versioned as files.
+
+## D11 - Protocol engine semantics (2026-10-03)
+
+**Decision:**
+- Expressions (`when`, `applies_when`, registry `requiredWhen`, conflict rules) use one tiny safe language (`uw_agent/protocols/expr.py`, no `eval`) with **three-valued (Kleene) logic**: a comparison on a missing field is UNKNOWN; `UNKNOWN and False` is False, `UNKNOWN or True` is True. The registry's free-text `requiredWhen` strings are converted into the same language.
+- Walker: at each node the first branch that is not False decides. True -> take it; UNKNOWN -> stop and return `blocked_on` (the missing fields in that branch), never guess; none true -> the node's `on_unexpected` outcome (normally UW review).
+- Overlays are evaluated after the tree. An overlay that is True adds its conditions (and can only make the decision more restrictive); an UNKNOWN overlay adds its missing fields to `blocked_on` so asks are consolidated into one message. A blocked protocol has no outcome/conditions.
+- `applies_when` gates a protocol: False -> `not_applicable` (e.g. no pool); UNKNOWN -> blocked.
+- Across protocols (G-1/D9): run enabled `quote`-stage protocols in manifest `order`; final decision = most restrictive (decline > escalate > quote_with_conditions > quote); conditions merged and de-duplicated; `blocked_on` is the union. **A decline short-circuits**: remaining protocols are skipped and the decision stands even if other fields are unknown (no more asks for a doomed lead). Any blocked protocol makes the lead `blocked` (asks come before escalation/quote) unless a decline short-circuited.
+- Outcomes can carry a non-binding `recommendation` (separate from binding `condition`s).
+- The linter (`python -m uw_agent.protocols.linter`; runs in pytest) checks manifest consistency, fields in registry or flagged NOT IN REGISTRY (and present in the resolution map once it exists), `when` expressions parse and use only the node's fields, literals valid for the field type/options, outcomes defined, unique node ids, `on_unexpected` present; it warns on uncovered options and unused outcomes. A reachability test brute-forces each protocol over its field domains and asserts every defined outcome is reachable.

@@ -40,3 +40,7 @@ Cross-protocol calls are under "Global".
 - **TL-4 (assumed):** The "Ensure only assets owned by the Trust/LLC are covered / Exclude Cov C / Premises Liability Only" box is a post-bind outcome of "No Unacceptable Exposures".
 - **TL-5 (open):** "Change to Premises Liability Only" and "THO policy" are unclear; copied verbatim into the condition text.
 - **TL-6 (assumed):** Post-bind fields `trust_llc_questionnaire_status`, `trust_llc_unacceptable_exposure_found` (derived from Income, Sales, non-household employees, commercial properties, aviation, watercraft) are not in the registry and are not asked at quote time (G-4).
+
+## Engine (G-7+)
+- **G-7 (assumed):** "No pool" (`pool_type == "None"`) means the pools protocol does not apply (no outcome), rather than an explicit "OK to quote" branch.
+- **G-8 (assumed):** A decline short-circuits other protocols and suppresses further asks (D11). *Why:* matches the "one crisp message" goal; a declined lead has nothing to gain from more questions. Risk: if the decline was driven by a wrong/assumed value the underwriter sees only that protocol's evidence.

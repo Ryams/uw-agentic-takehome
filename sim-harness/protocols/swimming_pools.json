@@ -1,104 +1,152 @@
 {
   "protocol": "swimming_pools",
   "source_image": "img/swimming_pools.png",
-  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (SP); pending re-encode to current schema",
-  "missing_data_policy": {
-    "note": "From diagram callout: 'If missing check google maps and zillow, if you don't see anything assume no'",
-    "applies_to": [
-      "pool_type",
-      "pool_security",
-      "pool_has_diving_board_or_slide",
-      "above_ground_pool_ladder",
-      "is_gated_community"
-    ],
-    "steps": [
-      {
-        "action": "lookup",
-        "tools": [
-          "google_maps_satellite",
-          "zillow"
-        ]
-      },
-      {
-        "action": "if_not_found",
-        "assume": "no / None"
-      }
-    ]
-  },
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (SP)",
+  "applies_when": "pool_type != \"None\"",
+  "stage": "quote",
+  "notes": "Diagram callout 'If missing check google maps and zillow, if you don't see anything assume no' is a resolution rule: see shared/field_resolution.json. No pool (pool_type None) means the protocol does not apply.",
   "outcomes": {
     "OK_TO_QUOTE": {
       "decision": "quote"
     },
     "ACCEPT_REC_COVER": {
       "decision": "quote",
-      "condition": "recommend secure cover (non-binding)"
+      "recommendation": "recommend a secure pool cover (non-binding)"
     },
     "REQUIRE_COVER": {
-      "decision": "quote",
-      "condition": "require secured cover within underwriting period"
+      "decision": "quote_with_conditions",
+      "condition": "require secured pool cover within underwriting period"
     },
     "REQUIRE_LADDER": {
-      "decision": "quote",
-      "condition": "require suitable (pull-up, locking) ladder within underwriting period"
+      "decision": "quote_with_conditions",
+      "condition": "require suitable pull-up locking ladder within underwriting period"
     },
     "LOL_ENDORSEMENT": {
-      "decision": "quote",
-      "condition": "attach Limitation of Liability endorsement"
+      "decision": "quote_with_conditions",
+      "condition": "attach Limitation of Liability endorsement (pool slide / diving board)"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
     }
   },
   "tree": {
-    "id": "pool_present",
-    "field": "pool_type",
-    "branches": {
-      "None": {
-        "outcome": "OK_TO_QUOTE",
-        "note": "implied by the diagram; no pool -> protocol does not apply"
-      },
-      "Inground": {
-        "id": "inground_security",
-        "field": "pool_security",
-        "branches": {
-          "Fenced": {
-            "id": "fenced_secure",
-            "question": "Fenced with self-locking gate or with safety cover?",
-            "field": "pool_fence_self_locking_or_safety_cover",
-            "field_status": "NOT IN REGISTRY - ask producer (DECISIONS.md D3)",
-            "branches": {
-              "true": {
-                "outcome": "OK_TO_QUOTE"
-              },
-              "false": {
-                "outcome": "REQUIRE_COVER"
+    "id": "pool_type",
+    "question": "Swimming Pools: inground or above ground?",
+    "fields": [
+      "pool_type"
+    ],
+    "branches": [
+      {
+        "label": "Inground",
+        "when": "pool_type == \"Inground\"",
+        "then": {
+          "id": "inground_security",
+          "question": "Inground: unfenced/uncovered, or fenced with self-locking gate / safety cover?",
+          "fields": [
+            "pool_security"
+          ],
+          "branches": [
+            {
+              "label": "Fenced with Self-Locking Gate or with Safety Cover",
+              "when": "pool_security == \"Fenced\"",
+              "then": {
+                "id": "fenced_secure",
+                "question": "Fenced with self-locking gate or with safety cover?",
+                "fields": [
+                  "pool_fence_self_locking_or_safety_cover"
+                ],
+                "branches": [
+                  {
+                    "label": "Yes",
+                    "when": "pool_fence_self_locking_or_safety_cover == true",
+                    "then": {
+                      "outcome": "OK_TO_QUOTE"
+                    }
+                  },
+                  {
+                    "label": "No",
+                    "when": "pool_fence_self_locking_or_safety_cover == false",
+                    "then": {
+                      "outcome": "REQUIRE_COVER"
+                    }
+                  }
+                ],
+                "on_unexpected": {
+                  "outcome": "UW_REVIEW"
+                },
+                "field_status": "NOT IN REGISTRY - ask producer (DECISIONS.md D3)"
+              }
+            },
+            {
+              "label": "Unfenced / Uncovered",
+              "when": "pool_security == \"Unfenced\"",
+              "then": {
+                "id": "unfenced_context",
+                "question": "Gated community or multi-acre property?",
+                "fields": [
+                  "is_gated_community"
+                ],
+                "branches": [
+                  {
+                    "label": "Gated Community or Multi-Acre Property",
+                    "when": "is_gated_community == true",
+                    "then": {
+                      "outcome": "ACCEPT_REC_COVER"
+                    }
+                  },
+                  {
+                    "label": "Non-gated community, Non-Multi-Acre Property",
+                    "when": "is_gated_community == false",
+                    "then": {
+                      "outcome": "REQUIRE_COVER"
+                    }
+                  }
+                ],
+                "on_unexpected": {
+                  "outcome": "UW_REVIEW"
+                }
               }
             }
-          },
-          "Unfenced": {
-            "id": "unfenced_context",
-            "field": "is_gated_community",
-            "note": "registry field combines 'gated community' and 'multi-acre'; could also be derived from acreage",
-            "branches": {
-              "true": {
-                "outcome": "ACCEPT_REC_COVER"
-              },
-              "false": {
-                "outcome": "REQUIRE_COVER"
-              }
-            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
           }
         }
       },
-      "Above Ground": {
-        "id": "ag_ladder",
-        "field": "above_ground_pool_ladder",
-        "branches": {
-          "true": {
-            "outcome": "OK_TO_QUOTE"
-          },
-          "false": {
-            "outcome": "REQUIRE_LADDER"
+      {
+        "label": "Above Ground",
+        "when": "pool_type == \"Above Ground\"",
+        "then": {
+          "id": "ag_ladder",
+          "question": "Pull-up, locking ladder?",
+          "fields": [
+            "above_ground_pool_ladder"
+          ],
+          "branches": [
+            {
+              "label": "Yes",
+              "when": "above_ground_pool_ladder == true",
+              "then": {
+                "outcome": "OK_TO_QUOTE"
+              }
+            },
+            {
+              "label": "No",
+              "when": "above_ground_pool_ladder == false",
+              "then": {
+                "outcome": "REQUIRE_LADDER"
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
           }
         }
       }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
     }
   },
   "overlay_rules": [
@@ -106,7 +154,7 @@
       "id": "slide_or_diving_board",
       "when": "pool_has_diving_board_or_slide == true",
       "outcome": "LOL_ENDORSEMENT",
-      "note": "Drawn as a sibling of Inground/Above Ground; treated as an overlay combined with the pool tree result - see open_questions"
+      "note": "Pools with slides or diving boards are acceptable with a Limitation of Liability endorsement; applied on top of the tree result (SP-2)."
     }
   ]
 }

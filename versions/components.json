@@ -61,11 +61,11 @@
     "version": 0
   },
   "protocol:swimming_pools": {
-    "content_hash": "2b49550e9999",
+    "content_hash": "404bc6ec2ecf",
     "files": [
       "sim-harness/protocols/swimming_pools.json"
     ],
-    "version": 0
+    "version": 1
   },
   "protocol:trusts_and_llcs_post_bind": {
     "content_hash": "7293e79d2a10",
@@ -89,16 +89,19 @@
     "version": 0
   },
   "protocol_engine": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "96b61a1df749",
+    "files": [
+      "uw_agent/protocols/engine.py",
+      "uw_agent/protocols/expr.py"
+    ],
+    "version": 1
   },
   "protocol_manifest": {
-    "content_hash": "3267a583ca37",
+    "content_hash": "a93d4d9b4ee8",
     "files": [
       "sim-harness/protocols/manifest.json"
     ],
-    "version": 0
+    "version": 1
   },
   "resolver": {
     "content_hash": "empty",

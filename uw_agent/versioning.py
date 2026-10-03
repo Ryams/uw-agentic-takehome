@@ -34,7 +34,7 @@ PROTOCOL_MANIFEST = "sim-harness/protocols/manifest.json"
 STATIC_COMPONENTS: dict[str, list[str]] = {
     "normalizer": ["uw_agent/normalize.py"],
     "resolver": ["uw_agent/resolution.py", "sim-harness/shared/field_resolution.json"],
-    "protocol_engine": ["uw_agent/protocols/engine.py"],
+    "protocol_engine": ["uw_agent/protocols/engine.py", "uw_agent/protocols/expr.py"],
     "protocol_manifest": [PROTOCOL_MANIFEST],
     "field_registry": ["sim-harness/shared/field_registry.json"],
     "lookup_tools": ["uw_agent/tools/*.py"],

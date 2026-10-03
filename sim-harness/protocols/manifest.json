@@ -19,8 +19,7 @@
     {
       "protocol": "swimming_pools", "file": "swimming_pools.json",
       "stage": "quote", "enabled": true, "order": 40, "tags": ["pool", "liability"],
-      "origin": { "source_image": "img/swimming_pools.png", "diagram": "swimming_pools", "split_from": null, "split_note": null },
-      "pending": "re-encode to current schema"
+      "origin": { "source_image": "img/swimming_pools.png", "diagram": "swimming_pools", "split_from": null, "split_note": null }
     },
     {
       "protocol": "trusts_and_llcs_post_bind", "file": "trusts_and_llcs_post_bind.json",
