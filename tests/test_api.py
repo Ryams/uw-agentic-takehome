@@ -168,3 +168,14 @@ def test_simulate_reply_for_one_lead_completes_just_that_lead(env):
     if nothing:
         assert c.post(f"/api/runs/{rid}/leads/{nothing}/simulate_reply", json={"mode": "complete"}).status_code == 409
     assert c.post(f"/api/runs/{rid}/leads/NOPE/simulate_reply", json={"mode": "complete"}).status_code == 404
+
+
+def test_starting_a_run_without_the_services_explains_what_to_do(env):
+    import httpx
+    w, c = env
+
+    def down(**kw):
+        raise httpx.ConnectError("connection refused")
+    w.ctx.reset = down
+    r = c.post("/api/runs", json={"seed": 42})
+    assert r.status_code == 503 and "make up" in r.json()["detail"]

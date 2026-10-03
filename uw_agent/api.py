@@ -11,6 +11,7 @@ import threading
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
@@ -90,7 +91,11 @@ def create_app(ctx: orch.Context, simulate: Optional[Callable[[list[str], str], 
     def start(req: StartRun) -> dict[str, Any]:
         if req.auto_send is not None:
             ctx.auto_send = req.auto_send
-        run_id = orch.start_run(ctx, req.seed, req.count, req.difficulty, reset=ctx.reset is not None)
+        try:
+            run_id = orch.start_run(ctx, req.seed, req.count, req.difficulty, reset=ctx.reset is not None)
+        except httpx.HTTPError as e:                      # the docker services are not up (or not reachable)
+            raise HTTPException(503, "Can't reach the lead generator / mailbox (is `make up` running?). "
+                                     f"{type(e).__name__}: {e}") from e
 
         def work() -> None:
             try:
