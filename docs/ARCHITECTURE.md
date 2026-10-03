@@ -2,31 +2,7 @@
 
 ![Architecture diagram](../Architecture%20Diagram.png)
 
-The diagram above is the whole system; orange boxes use an LLM. The Mermaid version below is the same flow as text, for the per-lead pipeline.
-
-```mermaid
-flowchart LR
-  LG[leadgen :8081<br/>queue + DEBUG answer key] -->|public lead| N
-  subgraph agent[uw_agent: per lead, parallel, idempotent]
-    N[normalize<br/>coerce, sentinels] --> A[analyze<br/>gaps, derive, conflicts]
-    A --> R[resolve missing fields<br/>fetch / lookup / assume / ask]
-    R --> E[protocol engine<br/>JSON trees, 6 playbooks]
-    E -->|new info| A
-    E --> D[decide + plan asks]
-    D --> C[composer: ONE email]
-    D --> S[summarizer]
-  end
-  R -->|HTTP| V[mock vendors :8082<br/>CRM KYC RCE PPC geo Maps/Zillow]
-  C -->|send| M[mailbox :8025]
-  M -->|reply| P[reply parser] --> N
-  D --> DB[(SQLite: runs, decisions,<br/>emails, answers, uw_actions)]
-  DB --> UI[FastAPI + web UI :8090<br/>underwriter]
-  UI -->|approve, override, provide value,<br/>edit/send draft| DB
-  classDef llm fill:#fde68a,stroke:#b45309;
-  class R,C,S,P llm;
-```
-
-Yellow nodes have a model call (the interpreter inside *resolve*, composer, summarizer, reply parser). Everything else is plain code.
+The diagram above is the whole system; orange boxes use an LLM.
 
 **Control flow per lead:** `normalize -> [analyze -> resolve -> evaluate protocols]* -> decide -> compose -> persist`. The bracketed loop repeats until nothing new is learned (a fetched value can unblock a derived one, which can unblock a protocol). Ground truth is never in this path: only the reply simulator, the CLI/server demo wiring and the evals may read it, and a test scans every other module for truth imports.
 
