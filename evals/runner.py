@@ -155,6 +155,28 @@ def live_cases(spec: dict[str, Any], leadgen_url: str) -> list[EvalCase]:
     return out
 
 
+def run_config(a: argparse.Namespace, names: list[str], llm_cfg: dict[str, Any]) -> dict[str, Any]:
+    """Everything about HOW this eval ran (beyond the code version), recorded with every row and in the run JSON."""
+    import platform
+    from importlib import metadata
+    ctx_defaults = orch.Context.__dataclass_fields__
+    return {**llm_cfg, "eval_run": {
+        "sets": names, "world": "live" if a.live else "in-process", "llm_flag": a.llm,
+        "max_reply_rounds": MAX_ROUNDS, "auto_send": True,
+        "max_emails_per_lead": ctx_defaults["max_emails"].default,
+        "reply_simulator_modes": {"seeded": "complete", "fixed": "per case (complete|partial|none)"},
+        "vendor_profile": "per docker env (VENDOR_PROFILE)" if a.live else "demo", "vendor_seed": 7,
+        "python": platform.python_version(), "anthropic_sdk": _pkg("anthropic"), "slice_dimensions": list(DIMENSIONS)}}
+
+
+def _pkg(name: str) -> Optional[str]:
+    from importlib import metadata
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return None
+
+
 def fmt(v: Optional[float]) -> str:
     return "  -  " if v is None else f"{v:5.2f}"
 
@@ -226,6 +248,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     detail: dict[str, Any] = {}
     runtime: dict[str, Any] = {}
     protocols = engine.load_protocols()
+    cfg = run_config(a, names, llm.runtime_config())
 
     for name in names:
         if name == "fixed":
@@ -252,7 +275,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         if not a.no_csv:
             for sname, srecs in sl.items():
                 records.append_eval_row(eval_run_id, spec["seed"], spec["difficulty"], len(srecs),
-                                        grader.aggregate(srecs), runtime, path=Path(a.csv), sv=sv, eval_set=name, slice=sname)
+                                        grader.aggregate(srecs), cfg, path=Path(a.csv), sv=sv, eval_set=name, slice=sname)
 
     # pooled slices across sets (re-key tags so lead ids don't collide across sets)
     for r in pooled_recs:
@@ -266,13 +289,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     all_slices = {k: (len(v), grader.aggregate(v)) for k, v in sorted(pooled.items(), key=lambda kv: (kv[0] != "overall", kv[0]))}
     if not a.no_csv:
         for sname, srecs in pooled.items():
-            records.append_eval_row(eval_run_id, 0, "pooled", len(srecs), grader.aggregate(srecs), runtime, path=Path(a.csv),
+            records.append_eval_row(eval_run_id, 0, "pooled", len(srecs), grader.aggregate(srecs), cfg, path=Path(a.csv),
                                     sv=sv, eval_set="ALL", slice=sname)
     cov = coverage(all_cases, protocols)
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     (RUNS_DIR / f"{eval_run_id}.json").write_text(json.dumps(
         {"eval_run_id": eval_run_id, "system_version": sv["system_version"], "dirty": sv["dirty"],
-         "runtime_config": runtime, "sets": detail, "coverage": cov, "composition_drift": drift,
+         "run_config": cfg, "sets": detail, "coverage": cov, "composition_drift": drift,
          "stale_expectations": stale}, indent=1, default=str))
     print_report(eval_run_id, sv, per_set, all_slices, cov, drift, stale, failures)
     print(f"\nper-lead detail: evals/runs/{eval_run_id}.json" + ("" if a.no_csv else "   summary row(s) appended to evals/results.csv"))

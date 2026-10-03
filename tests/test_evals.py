@@ -116,3 +116,21 @@ def test_compare_reports_component_changes_and_only_changed_metrics(tmp_path):
         w.writeheader()
         w.writerows(rows)
     assert "unsafe_quote_rate: 0.000 -> 0.100 (+0.100)" in compare.compare(ids[0], ids[1], out)
+
+
+def test_run_settings_are_recorded_and_diffed(tmp_path, monkeypatch):
+    from evals import compare
+    out = tmp_path / "r.csv"
+    runner.main(["--sets", "fixed", "--llm", "offline", "--csv", str(out)])
+    monkeypatch.setattr(runner, "MAX_ROUNDS", 2)                       # a setting that changes behaviour
+    runner.main(["--sets", "fixed", "--llm", "offline", "--csv", str(out)])
+    rows = list(csv.DictReader(out.open()))
+    ids = list(dict.fromkeys(r["eval_run_id"] for r in rows))
+    cfgs = [json.loads(next(r for r in rows if r["eval_run_id"] == i)["runtime_config_json"]) for i in ids]
+    e = cfgs[0]["eval_run"]
+    assert e["sets"] == ["fixed"] and e["world"] == "in-process" and e["max_reply_rounds"] == 3
+    assert {"auto_send", "max_emails_per_lead", "vendor_profile", "vendor_seed", "python", "anthropic_sdk"} <= set(e)
+    assert cfgs[0]["offline"] is True                                  # LLM config still at the top level
+    assert "eval_run.max_reply_rounds: 3 -> 2" in compare.compare(ids[0], ids[1], out)
+    detail = json.loads((runner.RUNS_DIR / f"{ids[1]}.json").read_text())
+    assert detail["run_config"]["eval_run"]["max_reply_rounds"] == 2

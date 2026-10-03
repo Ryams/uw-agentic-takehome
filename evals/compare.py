@@ -24,6 +24,14 @@ def compare(a: str, b: str, path: Path = RESULTS_CSV) -> str:
     ca, cb = json.loads(ra[0]["components_json"]), json.loads(rb[0]["components_json"])
     changed = [f"  {n}: {ca.get(n)} -> {cb.get(n)}" for n in sorted(set(ca) | set(cb)) if ca.get(n) != cb.get(n)]
     out += ["Component changes:"] + (changed or ["  (none)"])
+    ka, kb = json.loads(ra[0]["runtime_config_json"]), json.loads(rb[0]["runtime_config_json"])
+
+    def flat(d, pre=""):
+        for k, v in d.items():
+            yield from flat(v, f"{pre}{k}.") if isinstance(v, dict) else [(pre + k, v)]
+    fa, fb = dict(flat(ka)), dict(flat(kb))
+    diffs = [f"  {k}: {fa.get(k)} -> {fb.get(k)}" for k in sorted(set(fa) | set(fb)) if fa.get(k) != fb.get(k)]
+    out += ["Run config changes:"] + (diffs or ["  (none)"])
     metric_cols = [c for c in ra[0] if c not in BASE_COLUMNS + TAIL_COLUMNS]
 
     def mean(rows, col):  # weighted by slice size so a big seed counts more than a small one
