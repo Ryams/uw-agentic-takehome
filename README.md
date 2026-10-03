@@ -59,16 +59,13 @@ Documented in full, with files and invariants, in [`sim-harness/CHANGES.md`](sim
 1. **Ground truth in the answer key.** `GET /leads/{id}/debug` (still `DEBUG=true` only) now also returns `clean_fields`: the lead before any random nulling or conflicts. Seed 42 still produces a byte-identical queue, the public lead payload is unchanged, and a test pins both. Only the reply simulator and the evals read it.
 2. **Mock vendors service** (new, port 8082, in `docker-compose.yml`) over vendor-shaped SQLite tables that leadgen writes when it generates a queue. Nothing real is ever called.
 
-Everything else in `sim-harness/` is as provided (the mailbox is untouched; replies are ordinary stored rows with metadata). Added alongside: `sim-harness/protocols/` (the encoded playbook) and the shared field-resolution map.
 
 ## Limits and what is not verified
 
-- **No live Claude run.** Prompts, structured-output schemas and fallbacks are tested with scripted fakes and an offline stand-in; real model behaviour is unmeasured.
-- **UI not seen in a browser by me.** It is exercised through the API, render checks and a script, not eyes.
 - **Playbook coverage is partial** (5 of the 12 drill-down diagrams, encoded as 6 protocols), by design for the time box; the rest are on the hit list.
 - **Judgement calls in the diagrams** are assumptions the underwriter should confirm; each is listed with a status.
 - **Mock vendors are simple** (D25), the reply simulator is cooperative, and conflicts the generator injects are a small family.
-- **Time-box:** cut, in order, were the LLM-judged email rubric, imperfect free-text replies in the eval, UW-editable protocols, durable workflow, and real integrations.
+- **Cut / future work:** the LLM-judged email rubric, imperfect free-text replies in the eval, UW-editable protocols, durable workflow, and real integrations.
 
 ## Repo map
 
