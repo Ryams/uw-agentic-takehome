@@ -1,5 +1,9 @@
 # Architecture and trade-offs
 
+![Architecture diagram](../Architecture%20Diagram.png)
+
+The diagram above is the whole system; orange boxes use an LLM. The Mermaid version below is the same flow as text, for the per-lead pipeline.
+
 ```mermaid
 flowchart LR
   LG[leadgen :8081<br/>queue + DEBUG answer key] -->|public lead| N
