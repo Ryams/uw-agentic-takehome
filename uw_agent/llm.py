@@ -118,8 +118,23 @@ class AnthropicLLM:
 DEFAULT_EFFORT = {"interpreter": "low", "composer": "low", "summarizer": "low"}
 
 
-def get_llm() -> AnthropicLLM:
-    return AnthropicLLM()
+def get_llm(kind: Optional[str] = None) -> StructuredLLM:
+    """Backend by `kind` or UW_LLM: `anthropic` (API key), `claude-code` (local Claude Code login, D26), or
+    `offline` (rule-based stand-in). Unset: the API when ANTHROPIC_API_KEY is present, else a helpful error."""
+    import os
+    kind = (kind or os.environ.get("UW_LLM", "")).strip().lower()
+    if not kind:
+        kind = "anthropic" if os.environ.get("ANTHROPIC_API_KEY", "").strip() else ""
+    if kind == "claude-code":
+        from uw_agent.claude_code_llm import ClaudeCodeLLM
+        return ClaudeCodeLLM()
+    if kind == "offline":
+        from uw_agent.offline_llm import OfflineLLM
+        return OfflineLLM()
+    if kind == "anthropic":
+        return AnthropicLLM()
+    raise RuntimeError("No LLM backend configured. Set ANTHROPIC_API_KEY (API), or UW_LLM=claude-code to use your "
+                       "local Claude Code login (no API key), or UW_LLM=offline for the rule-based stand-in.")
 
 
 if __name__ == "__main__":  # python -m uw_agent.llm : tiny connectivity check (spends a few tokens)

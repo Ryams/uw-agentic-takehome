@@ -1,4 +1,4 @@
-.PHONY: setup up down test smoke-llm run demo-offline ui ui-offline eval eval-offline eval-live
+.PHONY: ui-cc eval-cc smoke-cc run-cc setup up down test smoke-llm run demo-offline ui ui-offline eval eval-offline eval-live
 
 setup:            ## install deps + enable the version-bump pre-commit hook
 	uv sync
@@ -36,3 +36,16 @@ eval-offline:     ## same, forcing the rule-based stand-in (deterministic, no ke
 
 eval-live:        ## seeded sets against the docker stack (needs `make up`; leadgen DEBUG=true)
 	uv run python -m evals.runner --live
+
+# --- Claude via your local Claude Code login (no API key; D26) ---
+smoke-cc:         ## live check of the 3 LLM edges through `claude -p`
+	UW_LLM=claude-code uv run python -m uw_agent.smoke_llm
+
+ui-cc:            ## UI with Claude via Claude Code (needs `make up` and a logged-in `claude`)
+	UW_LLM=claude-code uv run uvicorn --factory uw_agent.server:make_app --port 8090
+
+run-cc:           ## terminal run with Claude via Claude Code
+	uv run python -m uw_agent.cli run --seed 42 --llm claude-code
+
+eval-cc:          ## all eval sets with Claude via Claude Code (slow; uses subscription usage)
+	uv run python -m evals.runner --llm claude-code

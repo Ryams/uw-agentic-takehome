@@ -238,3 +238,16 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Intended production shape (not built):** keep the map as the *default plan* and the audit trail, with deterministic per-vendor adapters behind the same `found | not_found | unavailable` boundary the demo already uses. Add a model-assisted step where judgement is needed: proposing a canonical address, choosing among candidate matches, or choosing which source to try next when the default fails. Code validates every model proposal (schema, registry values, allow-listed tools and parameters), uncertain results escalate to the underwriter, and the whole thing is evaluated like the interpreter is now. The demo's `fetch`/`lookup` boundary and the eval set's vendor-failure cases are where that would plug in.
 
 **Where this shows up:** README architecture/trade-offs and hit list ("real integrations: address normalisation, entity matching, per-vendor adapters, dynamic source selection"); `tools/fetch.py` and `tools/lookup.py` carry a docstring pointing here.
+
+
+## D26 - A Claude Code backend so the model edges run without an API key (2026-10-03)
+
+**Decision:** `get_llm()` selects a backend by `UW_LLM`: `anthropic` (API key, the original), `claude-code`, or `offline`. `claude-code` (`uw_agent/claude_code_llm.py`) implements the same `structured()` contract by running the local `claude -p` CLI with the answer constrained by `--json-schema`, the prompt on stdin, `--tools ""`, `--disable-slash-commands`, `--no-session-persistence`, from an empty temp directory. Calls run at most 3 at a time; one retry on transient failure; refusals are not retried; every failure raises `LLMError` so the existing deterministic fallbacks apply unchanged.
+
+**Why:** the author and many evaluators have a Claude subscription but no API key (the API is billed separately), and a real-model run was the biggest unmeasured gap.
+
+**Credential handling (tested):** the code never reads, stores, logs or forwards credentials; auth lives inside the `claude` binary. `ANTHROPIC_API_KEY` is stripped from the child's environment so a subscription run cannot silently become metered. `--bare` is not used (it ignores the subscription login). `tests/test_claude_code_llm.py` asserts the stripped environment, no prompt in argv, an empty working directory, and scans every tracked file for key and token patterns; `.env` and `var/` are gitignored.
+
+**Limits:** slower than the API (a process per call, about 9 s each; a 10-lead queue about 80 s), counts against subscription usage limits, and depends on the installed CLI version (recorded in `runtime_config.claude_cli`). Whether programmatic use of a subscription login suits a given deployment is the user's call; this is a POC convenience, not the production design (production would use the API).
+
+**First real-model results (seed 42, `b9e7f87`, offline vs Claude Code):** identical lead states and decisions; 10/10 emails and 20/20 summaries were model-written (no fallbacks); the smoke test's interpreter marked blurry imagery "unclear" and clear imagery with high confidence. This is a single queue, not an eval; `make eval-cc` is the measured comparison.

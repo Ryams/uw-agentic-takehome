@@ -21,13 +21,27 @@ make ui-offline       # underwriter UI on http://localhost:8090, no API key need
 
 Open http://localhost:8090, click **Run morning queue**. The mock inbox is at http://localhost:8025.
 
-**With Claude** (the intended mode): `cp .env.example .env`, put your key in `ANTHROPIC_API_KEY` (create one at https://console.anthropic.com/settings/keys; the file is gitignored, nothing is ever committed), then `make smoke-llm` (live check of the three model edges) and `make ui` instead of `make ui-offline`. Default model is `claude-sonnet-5-5`, overridable per task (see `.env.example`). If you would rather not create a key, ask the author for a temporary one.
+### Using Claude (pick one)
+
+The model edges (evidence interpreter, email composer, reply parser, summarizer) can run three ways. All three are exercised by the same tests and eval sets.
+
+**A. Your Claude Code subscription, no API key** (Pro / Max; recommended if you already use Claude Code)
+1. Install [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) and log in once by running `claude` and following the prompt. Check with `claude --version`.
+2. `make smoke-cc` checks the three edges live (about 25 seconds), then `make ui-cc` starts the UI with Claude, `make run-cc` runs the queue in the terminal, and `make eval-cc` runs the evals. Equivalent: set `UW_LLM=claude-code` in front of any command.
+
+How it works: each model call runs `claude -p` (print mode) with the prompt on stdin, a JSON schema for the answer, no tools, no skills, no session saved, from an empty temp directory. **Nothing here reads, stores or forwards a credential:** authentication stays inside the `claude` binary (your own login), and `ANTHROPIC_API_KEY` is deliberately removed from the child process so a stray key can never switch a subscription run to metered billing. Calls count against your subscription's usage limits, take a few seconds each (a 10-lead queue is about 80 seconds), and run at most 3 at a time (`UW_CLAUDE_CODE_CONCURRENCY`). Decision record: D26.
+
+**B. Anthropic API key.** `cp .env.example .env`, put your key in `ANTHROPIC_API_KEY` (create one at https://console.anthropic.com/settings/keys; a Pro/Max subscription does not include API access, which is billed separately). `.env` is gitignored and nothing is ever committed. Then `make smoke-llm`, `make ui`, `make run`, `make eval`.
+
+**C. No model at all.** `make ui-offline`, `make demo-offline`, `make eval-offline` use a deterministic rule-based stand-in. Good for trying the flow and for fast regression runs; it says nothing about Claude.
+
+Every run and eval records which backend and model it used.
 
 | Command | What it does |
 |---|---|
-| `make ui` / `make ui-offline` | underwriter UI (Claude / rule-based stand-in) |
-| `make run` / `make demo-offline` | the whole queue in the terminal: process, simulate producer replies, re-process |
-| `make eval` / `make eval-offline` | all eval sets; `eval-live` runs the seeded sets against the docker stack |
+| `make ui` / `make ui-cc` / `make ui-offline` | underwriter UI (API key / Claude Code login / rule-based stand-in) |
+| `make run` / `make run-cc` / `make demo-offline` | the whole queue in the terminal: process, simulate producer replies, re-process |
+| `make eval` / `make eval-cc` / `make eval-offline` | all eval sets; `eval-live` runs the seeded sets against the docker stack |
 | `make test` | 109 tests, no network and no model needed |
 | `make down` | stop the docker services |
 

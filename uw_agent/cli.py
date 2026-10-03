@@ -8,6 +8,7 @@ Claude (no API key); otherwise ANTHROPIC_API_KEY is required."""
 from __future__ import annotations
 
 import argparse
+import os
 from functools import partial
 from pathlib import Path
 
@@ -27,12 +28,8 @@ from uw_agent.truth import TruthStore
 
 def build_context(offline: bool, auto_send: bool = True, db_path: str | Path = ROOT / "var" / "uw_agent.db") -> orch.Context:
     s = get_settings()
-    if offline:
-        from uw_agent.offline_llm import OfflineLLM
-        llm = OfflineLLM()
-    else:
-        from uw_agent.llm import get_llm
-        llm = get_llm()
+    from uw_agent.llm import get_llm
+    llm = get_llm("offline" if offline else None)          # None: UW_LLM, else the API when a key is set
     http = httpx.Client(timeout=30)
     return orch.Context(
         db=Database(db_path), source=HttpLeadSource(s.leadgen_url, http), mailbox=HttpMailbox(s.mailbox_url, http),
@@ -60,12 +57,15 @@ def main() -> None:
     r.add_argument("--count", type=int, default=10)
     r.add_argument("--difficulty", default="mixed")
     r.add_argument("--offline", action="store_true")
+    r.add_argument("--llm", choices=["anthropic", "claude-code", "offline"], help="backend (default: UW_LLM or API key)")
     r.add_argument("--no-replies", action="store_true")
     r.add_argument("--reply-mode", default="complete", choices=["complete", "partial"])
     r.add_argument("--rounds", type=int, default=2)
     a = ap.parse_args()
 
-    ctx = build_context(a.offline)
+    if a.llm:
+        os.environ["UW_LLM"] = a.llm
+    ctx = build_context(a.offline or a.llm == "offline")
     run_id = orch.start_run(ctx, a.seed, a.count, a.difficulty)
     print(f"run {run_id}  system {ctx.db.one('SELECT system_version FROM runs WHERE run_id=?', (run_id,))[0]}")
     orch.run_queue(ctx, run_id)

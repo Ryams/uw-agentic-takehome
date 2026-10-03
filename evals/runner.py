@@ -1,7 +1,8 @@
 """Eval runner (D17/D18): run eval sets through the real orchestrator, grade against ground truth, report per slice,
 append to evals/results.csv stamped with the system version.
 
-    uv run python -m evals.runner                       # all sets, in-process world, Claude if a key is set else offline
+    uv run python -m evals.runner                       # all sets; UW_LLM, else the API if a key is set, else offline
+    uv run python -m evals.runner --llm claude-code     # real Claude via your local Claude Code login (no API key)
     uv run python -m evals.runner --sets s42-mixed,fixed --llm offline
     uv run python -m evals.runner --live                # seeded sets against the docker stack (leadgen DEBUG=true)
     uv run python -m evals.runner --record-composition  # re-record seeded set composition after a deliberate change
@@ -38,13 +39,10 @@ DIMENSIONS = ("protocol", "outcome", "failure_mode", "archetype", "tier", "scena
 
 
 def make_llm(kind: str):
-    if kind == "auto":
-        kind = "claude" if os.environ.get("ANTHROPIC_API_KEY") else "offline"
-    if kind == "offline":
-        from uw_agent.offline_llm import OfflineLLM
-        return OfflineLLM()
     from uw_agent.llm import get_llm
-    return get_llm()
+    if kind == "auto":      # explicit UW_LLM wins, then an API key, else the deterministic stand-in
+        kind = os.environ.get("UW_LLM", "").strip() or ("anthropic" if os.environ.get("ANTHROPIC_API_KEY") else "offline")
+    return get_llm("anthropic" if kind == "claude" else kind)
 
 
 def _mode(case: EvalCase, rnd: int) -> str:
@@ -220,7 +218,7 @@ def print_report(eval_run_id: str, sv: dict[str, Any], per_set: dict[str, dict[s
 def main(argv: Optional[list[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sets", default=",".join([*setdefs.SEEDED_SPECS, "fixed"]))
-    ap.add_argument("--llm", default="auto", choices=["auto", "offline", "claude"])
+    ap.add_argument("--llm", default="auto", choices=["auto", "offline", "claude", "anthropic", "claude-code"])
     ap.add_argument("--live", action="store_true", help="seeded sets against the docker stack (needs `make up`)")
     ap.add_argument("--no-csv", action="store_true")
     ap.add_argument("--csv", default=str(records.RESULTS_CSV), help="results file to append to")

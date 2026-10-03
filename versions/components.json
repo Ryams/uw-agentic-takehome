@@ -43,11 +43,11 @@
     "version": 1
   },
   "llm_client": {
-    "content_hash": "78d0b3417bb2",
+    "content_hash": "448aba00e7ef",
     "files": [
       "uw_agent/llm.py"
     ],
-    "version": 2
+    "version": 3
   },
   "lookup_tools": {
     "content_hash": "92102c08a275",
