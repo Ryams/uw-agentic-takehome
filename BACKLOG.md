@@ -22,7 +22,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [core] Standard result shape: outcome, conditions, blocking fields, evidence trail
 - [next] When choosing the next protocols: check for cross-protocol dependencies (one protocol's computed value or outcome feeding another, e.g. fire simulation -> roof); if found, add `depends_on`/`produces` to the manifest and run protocols in dependency order
 - [hit list] Conditions tracker: quote conditions carry deadlines and fallbacks ("within 60 days or decline", "within first term"); track and enforce post-quote
-- [next] Generator coverage: leadgen never produces P(F) in (.15, .50] or non-wildfire Class B/C roofs, so those roof/siding branches are untested by generated queues; consider a documented generator tweak (wildfire P(F) range) or hand-built eval leads
+- [core] Eval hardening (D17): fixed eval sets under `evals/sets/` (hand-built leads for every protocol outcome/boundary in `evals/COVERAGE_GAPS.md`, lookup and imperfect-reply scenarios) + seeded sets with recorded breakdown + per-run coverage table
 - [hit list] Remaining ~6 protocols, UW-editable protocol authoring
 
 ## Tools / integrations (mostly stubbed)

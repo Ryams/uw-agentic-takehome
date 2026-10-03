@@ -78,6 +78,7 @@ Goal: for any run (especially evals) know exactly what code/config produced it.
 
 ### 7. Evals
 - `evals/` runner: for seeds [42, ...], call `reset_world()` before EVERY seed (mailbox cleared, queue regenerated) so seeds can't contaminate each other, then generate queue with `DEBUG=true`, run workflow, grade against truth + answer key: correct path, correct blockers, minimal email (no over-asking/missed asks, bind-only not chased), no unnecessary escalation, optional LLM email-quality rubric. Output a table/JSON report and append to `evals/results.csv` stamped with `system_version` (see 0b); `evals/compare.py` diffs two runs.
+- Harden (D17): fixed eval sets in `evals/sets/` (hand-built leads covering every outcome/boundary in `evals/COVERAGE_GAPS.md`, with ground truth + frozen expected results + tags), seeded sets with a recorded composition, and a per-run coverage table; set identity stamped in `results.csv`.
 - Compute the expected outcome by running the SAME engine on `clean_fields` (truth) - so grading isolates resolution/email quality from protocol logic.
 
 ### 8. Docs

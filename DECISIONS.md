@@ -143,3 +143,9 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 - The expression language gained `+` / `-` on numeric operands (e.g. `roof_replacement_year >= current_year - 20`).
 - `derive` steps in the resolution map can use ordered `rules [{when, value, why}]` over any fields (first non-False rule decides; UNKNOWN -> the field is **pending** on the missing inputs, which become their own gaps), in addition to the single-field `table` form. Derived values are returned in `Analysis.derived` with their `why`, so the UI/email can show them as explained assumptions.
 - A diagram branch such as Roof Class's "Unknown Class" (class not provided -> assume from material) is modelled as the derivation of the underlying field, not as a protocol branch, when it is equivalent to the known-value branches (RC-1). Protocols stay pure and branch only on resolved values.
+
+## D17 - Fixed, reproducible eval sets with a known breakdown (2026-10-03)
+
+**Decision:** The eval milestone includes a "harden the tests" step. Evals run on (a) **fixed eval sets** committed under `evals/sets/`: hand-built leads (raw fields + ground-truth `clean_fields` + tags + frozen expected result) covering every protocol outcome and numeric boundary listed in `evals/COVERAGE_GAPS.md`, plus lookup-outcome and imperfect-reply scenarios; and (b) **seeded generator sets** (e.g. seeds 42/7/101 at stated difficulty) whose composition (archetypes, expected outcome per protocol) is recorded alongside the set, so results are deterministic and comparable across versions. Every eval run reports a **coverage table** (which protocol outcomes/branches the set exercised) so gaps are visible. Eval-set identity (set name, generator version, seed) is stamped in `evals/results.csv` (D10).
+
+**Why:** generated queues skew toward a few outcomes (see COVERAGE_GAPS.md); metrics on them alone would hide untested branches.
