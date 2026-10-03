@@ -34,7 +34,7 @@ Cross-protocol calls are under "Global".
 - **WH-5 (confirmed by registry):** Tankless heaters skip age/location (those fields are only required when `water_heater_type = Tank`).
 
 ## trusts_and_llcs (TL)
-- **TL-1 (assumed):** The diagram is mostly a post-bind process. Only the first step is evaluated at quote time: a trust-owned property gets the condition "require Trust & LLC questionnaire within 30 days of bind". The rest is encoded as a `post_bind` component and not run.
+- **TL-1 (assumed):** The diagram is mostly a post-bind process, split into `trusts_and_llcs_quote` (enabled) and `trusts_and_llcs_post_bind` (disabled), see manifest. Only the first step is evaluated at quote time: a trust-owned property gets the condition "require Trust & LLC questionnaire within 30 days of bind". The rest is encoded as a `post_bind` component and not run.
 - **TL-2 (assumed):** The protocol is triggered by `residence_held_in_trust == true`. The registry has no LLC field; the toggle ("owned by a trust") is treated as covering LLC ownership. *Why:* avoids asking every producer a new question; revisit if LLC cases are missed.
 - **TL-3 (assumed):** The double-headed arrow between "Unacceptable Exposures Found" and "Cancel w/in UWing Period" means Found -> Cancel.
 - **TL-4 (assumed):** The "Ensure only assets owned by the Trust/LLC are covered / Exclude Cov C / Premises Liability Only" box is a post-bind outcome of "No Unacceptable Exposures".

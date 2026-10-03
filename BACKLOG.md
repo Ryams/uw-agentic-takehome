@@ -15,7 +15,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [next] Conflict/plausibility checks (e.g. future roof year, 11 months unoccupied but "primary")
 
 ## Protocol engine
-- [core] `encode-protocol` skill (done) and re-encode `swimming_pools.json` to the D6 shape
+- [core] `protocols/manifest.json` (done; linter checks files <-> manifest); `encode-protocol` skill (done) and re-encode `swimming_pools.json` to the D6 shape
 - [core] Protocol linter: fields exist in registry/resolution map, branch keys valid for field type, leaves reference outcomes, nodes have question/check/on_unexpected
 - [core] JSON tree evaluator: field lookup, branch, outcome, "blocked on unknown field" result
 - [core] Encode 3-4 protocols (pools done; pick others from Occupancy, Roof Class, Post & Pier, Electrical, Plumbing)

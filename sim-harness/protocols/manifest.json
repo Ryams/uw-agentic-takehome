@@ -1,0 +1,31 @@
+{
+  "note": "Registry of protocols. The engine runs entries with enabled=true AND stage='quote'. When a diagram is split into several protocols, every piece keeps `origin` (the diagram group / source image) and `split_from` so encodings can be traced back and updated together. Managed via the encode-protocol skill; the linter checks files <-> manifest.",
+  "protocols": [
+    {
+      "protocol": "general_plumbing", "file": "general_plumbing.json",
+      "stage": "quote", "enabled": true, "order": 10, "tags": ["water", "plumbing"],
+      "origin": { "source_image": "img/plumbing.png", "diagram": "plumbing", "split_from": "plumbing", "split_note": "Root splits into General Plumbing and Water Heaters; independent branches (JUDGEMENT_CALLS G-2)." }
+    },
+    {
+      "protocol": "water_heaters", "file": "water_heaters.json",
+      "stage": "quote", "enabled": true, "order": 20, "tags": ["water", "plumbing"],
+      "origin": { "source_image": "img/plumbing.png", "diagram": "plumbing", "split_from": "plumbing", "split_note": "Second branch of the plumbing diagram." }
+    },
+    {
+      "protocol": "trusts_and_llcs_quote", "file": "trusts_and_llcs_quote.json",
+      "stage": "quote", "enabled": true, "order": 30, "tags": ["entity"],
+      "origin": { "source_image": "img/trusts_and_llcs.png", "diagram": "trusts_and_llcs", "split_from": "trusts_and_llcs", "split_note": "First step only ('Require Trust & LLC Questionnaire within 30 days of bind'); the rest of the diagram is post-bind (D7)." }
+    },
+    {
+      "protocol": "swimming_pools", "file": "swimming_pools.json",
+      "stage": "quote", "enabled": true, "order": 40, "tags": ["pool", "liability"],
+      "origin": { "source_image": "img/swimming_pools.png", "diagram": "swimming_pools", "split_from": null, "split_note": null },
+      "pending": "re-encode to current schema"
+    },
+    {
+      "protocol": "trusts_and_llcs_post_bind", "file": "trusts_and_llcs_post_bind.json",
+      "stage": "post_bind", "enabled": false, "order": 90, "tags": ["entity"],
+      "origin": { "source_image": "img/trusts_and_llcs.png", "diagram": "trusts_and_llcs", "split_from": "trusts_and_llcs", "split_note": "Questionnaire arrival, exposure screen, cancel / restrict coverage. Encoded for completeness; not run in the POC (D7)." }
+    }
+  ]
+}

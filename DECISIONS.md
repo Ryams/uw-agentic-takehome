@@ -76,3 +76,11 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Decision:** Every ambiguity, dead end, boundary, mapping or assumption made while encoding is recorded in `sim-harness/protocols/JUDGEMENT_CALLS.md` (per-protocol sections, ids like GP-1, status assumed/confirmed/overruled), not in per-file `open_questions`. Independent root branches of one diagram become separate protocol files; combining results across protocols (most restrictive, conditions merged) is engine config (G-1), not per-file.
 
 **Why:** One place for the underwriter to review and overturn; protocol files stay pure; supports the review conversation about trade-offs.
+
+## D9 - Protocol manifest with stage/enabled/order/tags and split provenance (2026-10-03)
+
+**Decision:** `sim-harness/protocols/manifest.json` lists every protocol with `stage` (`quote`|`post_bind`), `enabled`, `order`, `tags`, and `origin` (`source_image`, `diagram`, `split_from`, `split_note`). The engine runs only `enabled && stage == quote`. Whenever a diagram is split, each piece keeps its origin so we can find and update sibling encodings later. Maintained through the `encode-protocol` skill; the linter checks files <-> manifest consistency.
+
+**Why:** Makes "encoded but not run" explicit (trusts post-bind), enables short-circuiting by `order` (don't email about a pool if plumbing already declines), and keeps traceability from JSON back to the source diagram.
+
+**Applied:** `trusts_and_llcs` split into `trusts_and_llcs_quote` (enabled) and `trusts_and_llcs_post_bind` (disabled); plumbing split into `general_plumbing` and `water_heaters`.

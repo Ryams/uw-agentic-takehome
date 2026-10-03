@@ -28,10 +28,14 @@ Input: `sim-harness/protocols/img/<topic>.png`. Output: `sim-harness/protocols/<
 10. **Judgement calls:** never silently guess. Record every ambiguous reading, dead end, boundary choice, typo, or assumption in ONE place: `sim-harness/protocols/JUDGEMENT_CALLS.md`, in a section for the protocol (id prefix per protocol, e.g. GP-1), with status assumed/confirmed/overruled and a one-line justification. Do NOT use per-file `open_questions`; a protocol file's `status` just points to the log. Calls must be justifiable for the demo, not necessarily confirmed first.
 11. **One image, several protocols:** if the diagram root splits into independent branches (e.g. plumbing: General Plumbing / Water Heaters), write one protocol file per branch (all with the same `source_image`). Do not use per-file `components`/`combine`; combining results across protocols is engine config (JUDGEMENT_CALLS.md G-1). Within a file, use `components` only to separate lifecycle stages (`quote` vs `post_bind`; the engine only runs `quote`).
 
+12. **Manifest:** every protocol file has an entry in `sim-harness/protocols/manifest.json`: `protocol`, `file`, `stage` (`quote`|`post_bind`), `enabled`, `order` (cheap deterministic protocols first; ones needing lookups/producer asks later; used for short-circuiting and display), `tags`, and `origin`. The engine runs only `enabled && stage == "quote"`. Add/update the entry whenever you create, split, or re-encode a protocol.
+13. **Splits keep provenance:** when a diagram is split into several protocols (independent root branches, or quote vs post-bind stages), EVERY piece's manifest `origin` records `source_image`, `diagram` (group id), `split_from` (the original diagram/protocol name) and `split_note` (why/how it was split). Also put `split_from` in the protocol file. Never split without recording this, so later encoding updates can find all sibling pieces (grep the manifest for the same `diagram`).
+
 ## Process
 1. Read image -> list nodes/edges/callouts.
+1b. Check the manifest for existing protocols from the same `diagram` (a re-encode or sibling split).
 2. Look up candidate fields in the registry (grep the field names/labels/`requiredWhen`).
 3. Draft the JSON per the rules above.
 4. Run the protocol linter if it exists (every `field` is in the registry or flagged; branch keys valid for field type; leaves reference defined outcomes; every node has `question`/`check`/`on_unexpected`).
-5. Add/update field-resolution map entries for the fields and callouts involved.
+5. Add/update the manifest entry (rules 12-13) and the field-resolution map entries for the fields and callouts involved.
 6. Report to the user: fields used, new non-registry fields (D3), and the judgement calls added to JUDGEMENT_CALLS.md.

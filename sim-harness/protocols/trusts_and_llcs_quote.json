@@ -1,0 +1,39 @@
+{
+  "protocol": "trusts_and_llcs_quote",
+  "source_image": "img/trusts_and_llcs.png",
+  "split_from": "trusts_and_llcs (first step only)",
+  "status": "draft - judgement calls in JUDGEMENT_CALLS.md (TL)",
+  "applies_when": "residence_held_in_trust == true",
+  "applies_when_note": "The diagram's entry node is just the title 'Trusts & LLCs'; the trigger is implied. The registry only has residence_held_in_trust ('Is the property owned by a trust?') - no LLC field. See open_questions.",
+  "stage": "quote",
+  "outcomes": {
+    "QUOTE_REQUIRE_QUESTIONNAIRE": {
+      "decision": "quote_with_conditions",
+      "stage": "quote",
+      "condition": "require Trust & LLC questionnaire within 30 days of bind"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "tl_entry",
+    "question": "Require Trust & LLC Questionnaire within 30 days of bind",
+    "fields": [
+      "residence_held_in_trust"
+    ],
+    "branches": [
+      {
+        "label": "Property held in trust (or LLC)",
+        "when": "residence_held_in_trust == true",
+        "then": {
+          "outcome": "QUOTE_REQUIRE_QUESTIONNAIRE"
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  }
+}

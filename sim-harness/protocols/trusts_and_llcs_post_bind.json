@@ -1,0 +1,84 @@
+{
+  "protocol": "trusts_and_llcs_post_bind",
+  "source_image": "img/trusts_and_llcs.png",
+  "split_from": "trusts_and_llcs (everything after the questionnaire is required)",
+  "status": "draft - not evaluated in POC (D7); judgement calls in JUDGEMENT_CALLS.md (TL)",
+  "applies_when": "residence_held_in_trust == true",
+  "stage": "post_bind",
+  "outcomes": {
+    "CANCEL_IN_UW_PERIOD": {
+      "decision": "cancel",
+      "stage": "post_bind",
+      "condition": "cancel within underwriting period"
+    },
+    "RESTRICT_TO_TRUST_ASSETS": {
+      "decision": "quote_with_conditions",
+      "stage": "post_bind",
+      "condition": "cover only assets owned by the Trust/LLC (usually Cov A and Cov B); occupants should carry a separate policy for personal property; exclude Cov C; change to Premises Liability Only"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "tl_questionnaire",
+    "question": "Was the questionnaire received within 30 days of bind?",
+    "fields": [
+      "trust_llc_questionnaire_status"
+    ],
+    "field_status": "NOT IN REGISTRY - post-bind event; not asked at quote time (see open_questions)",
+    "branches": [
+      {
+        "label": "Not Received within 30 Days",
+        "when": "trust_llc_questionnaire_status == \"not_received_within_30_days\"",
+        "then": {
+          "outcome": "CANCEL_IN_UW_PERIOD"
+        }
+      },
+      {
+        "label": "Received within 30 Days",
+        "when": "trust_llc_questionnaire_status == \"received_within_30_days\"",
+        "then": {
+          "id": "tl_screen",
+          "question": "Screen for Unacceptable Exposures",
+          "fields": [
+            "trust_llc_unacceptable_exposure_found"
+          ],
+          "field_status": "NOT IN REGISTRY - derived from questionnaire answers; post-bind",
+          "screen_items": [
+            "Income",
+            "Sales",
+            "Employees other than household staff",
+            "Commercial Properties",
+            "Aviation",
+            "Watercraft"
+          ],
+          "screen_rule": "any item present => unacceptable exposure found",
+          "branches": [
+            {
+              "label": "Unacceptable Exposures Found",
+              "when": "trust_llc_unacceptable_exposure_found == true",
+              "then": {
+                "outcome": "CANCEL_IN_UW_PERIOD"
+              }
+            },
+            {
+              "label": "No Unacceptable Exposures",
+              "when": "trust_llc_unacceptable_exposure_found == false",
+              "then": {
+                "outcome": "RESTRICT_TO_TRUST_ASSETS"
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
+          }
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  }
+}
