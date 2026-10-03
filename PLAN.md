@@ -10,7 +10,7 @@
 > - [x] 5. Orchestrator + state + reply loop (done; D21)
 > - [x] 6. API + web UI (done; D22; not visually verified in a browser yet)
 > - [x] 7. Evals (done; D23/D24; offline stand-in only, a keyed run is pending; `make eval`, `evals/compare.py`)
-> - [ ] 8. Docs
+> - [x] 8. Docs (README.md: setup, architecture + trade-offs, evals + iteration plan, skills + hit list, changes to provided tooling)
 
 # Implementation Plan: UW Agentic Assistant POC
 

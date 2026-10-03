@@ -65,7 +65,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [hit list] Feed UW overrides back into the eval set
 
 ## Packaging / docs
-- [core] One-command setup (docker compose + run script), `.env.example`, no committed secrets
-- [core] README: architecture, trade-offs, "changes to provided tooling" (D5)
-- [core] Skills list (implemented) + prioritized hit list
-- [core] Iteration plan for evals
+- [done] One-command setup (docker compose + run script), `.env.example`, no committed secrets
+- [done] README: architecture, trade-offs, "changes to provided tooling" (D5)
+- [done] Skills list (implemented) + prioritized hit list
+- [done] Iteration plan for evals
