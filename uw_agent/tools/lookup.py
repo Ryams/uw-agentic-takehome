@@ -1,5 +1,9 @@
 """Imagery / listing lookup (the playbook's 'check Google Maps and Zillow'): thin client of the mock
-vendors service. Returns evidence TEXT for the interpreter."""
+vendors service. Returns evidence TEXT for the interpreter.
+
+Demo simplification (D25): a fixed field->tool map and `GET /<vendor>/<lead_id>` queries. Production calls would
+need dynamically constructed queries (address normalisation, entity matching, per-vendor parameters, source selection).
+"""
 
 from __future__ import annotations
 

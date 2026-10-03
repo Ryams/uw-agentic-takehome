@@ -28,7 +28,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 ## Tools / integrations (mostly stubbed)
 - [core] Mock vendors service (CRM, KYC, RCE, PPC, geo risk) + thin fetch clients; vendor tables written by leadgen (D19)
 - [core] Mock Maps/Zillow listing search returning evidence text (found / not found / ambiguous / unavailable) + thin lookup client (D19)
-- [hit list] Real integrations: satellite imagery, property data providers, KYC, fire-dept/PC lookup
+- [hit list] Real integrations: satellite imagery, property data providers, KYC, fire-dept/PC lookup; plus dynamic query construction (address normalisation, entity matching, per-vendor adapters, model-assisted source selection with code validation; D25)
 
 ## Agent / LLM
 - [core] Email composer: one consolidated, minimal follow-up per lead, merged across all blocking protocols

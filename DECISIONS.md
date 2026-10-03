@@ -223,3 +223,18 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Measured effect (offline stand-in, fixed set):** unsafe quotes 2 -> 0, decision accuracy 0.95 -> 1.00; emails per lead 0.44 -> 0.53 (the two leads now need a reply round). Seeded sets unchanged (their pool leads never hit an inconclusive lookup). Comparison: `uv run python -m evals.compare <baseline_run_id> <new_run_id>`.
 
 **D23 addendum - run settings are recorded.** Every results row's `runtime_config_json` (and `evals/runs/<id>.json`, key `run_config`) holds the LLM config (models, efforts or `offline`) plus an `eval_run` block: sets run, world (in-process or live), `--llm` flag, max reply rounds, auto-send, max emails per lead, reply-simulator modes, vendor profile and seed, Python and Anthropic SDK versions, and the slice dimensions. `evals/compare.py` prints "Run config changes" next to component changes, so two runs of the same commit with different settings are distinguishable. Rows written before this change carry only the LLM config.
+
+
+## D25 - The strict field->tool map and trivial queries are a demo simplification (2026-10-03)
+
+**Decision:** Resolving a missing field by walking a fixed per-field step chain (`field_resolution.json`) and calling vendors with `GET /<vendor>/<lead_id>` is a choice made **specifically for the demo**, not a claim about production. It is right here because the mock vendors are keyed by our own lead id, return one flat object per vendor, and the set of fields and sources is small and known. It keeps the eval deterministic and the plan reviewable.
+
+**Production would differ.** The external calls to make will often not fit a strict map, and the queries will need to be at least partly constructed dynamically:
+- which source to call for a field can depend on the lead (jurisdiction, property type, data already known, vendor coverage and cost), and several vendors may overlap or disagree;
+- the query itself must be built from the lead: normalised and geocoded address, parcel number versus address versus coordinates, dates and units, auth, pagination, per-vendor schemas;
+- inputs may be dirty or missing themselves (a geocode must precede a fire-risk call), and matching the right property among candidates is a judgement, where a wrong match is worse than "not found";
+- failures are messier than found / not found / unavailable (rate limits, partial or stale records, schema drift).
+
+**Intended production shape (not built):** keep the map as the *default plan* and the audit trail, with deterministic per-vendor adapters behind the same `found | not_found | unavailable` boundary the demo already uses. Add a model-assisted step where judgement is needed: proposing a canonical address, choosing among candidate matches, or choosing which source to try next when the default fails. Code validates every model proposal (schema, registry values, allow-listed tools and parameters), uncertain results escalate to the underwriter, and the whole thing is evaluated like the interpreter is now. The demo's `fetch`/`lookup` boundary and the eval set's vendor-failure cases are where that would plug in.
+
+**Where this shows up:** README architecture/trade-offs and hit list ("real integrations: address normalisation, entity matching, per-vendor adapters, dynamic source selection"); `tools/fetch.py` and `tools/lookup.py` carry a docstring pointing here.

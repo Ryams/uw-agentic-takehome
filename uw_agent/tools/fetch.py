@@ -1,4 +1,8 @@
-"""System-owned field fetch: thin client of the mock vendors service, routed by field_resolution.json."""
+"""System-owned field fetch: thin client of the mock vendors service, routed by field_resolution.json.
+
+Demo simplification (D25): a fixed field->tool map and `GET /<vendor>/<lead_id>` queries. Production calls would
+need dynamically constructed queries (address normalisation, entity matching, per-vendor parameters, source selection).
+"""
 
 from __future__ import annotations
 

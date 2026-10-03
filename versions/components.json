@@ -50,14 +50,14 @@
     "version": 2
   },
   "lookup_tools": {
-    "content_hash": "bf340ce5e386",
+    "content_hash": "92102c08a275",
     "files": [
       "uw_agent/tools/__init__.py",
       "uw_agent/tools/base.py",
       "uw_agent/tools/fetch.py",
       "uw_agent/tools/lookup.py"
     ],
-    "version": 1
+    "version": 2
   },
   "mock_vendors": {
     "content_hash": "d398d19fea65",
