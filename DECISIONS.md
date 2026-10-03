@@ -84,3 +84,15 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Why:** Makes "encoded but not run" explicit (trusts post-bind), enables short-circuiting by `order` (don't email about a pool if plumbing already declines), and keeps traceability from JSON back to the source diagram.
 
 **Applied:** `trusts_and_llcs` split into `trusts_and_llcs_quote` (enabled) and `trusts_and_llcs_post_bind` (disabled); plumbing split into `general_plumbing` and `water_heaters`.
+
+## D10 - Component/system versioning and eval run records (2026-10-03)
+
+**Decision:**
+- Components (normalizer, resolver, protocol_engine, protocol_manifest, one `protocol:<name>` per protocol, field_registry, lookup_tools, llm_client, evidence_interpreter, email_composer, summarizer, orchestrator, grader, and `leadgen_generator`) each own a set of file globs (`uw_agent/versioning.py`). A component's version is an integer starting at 0 that increments when the content hash of its files changes. Not-yet-written components hash as `empty` (v0) and bump when their files first appear.
+- `versions/components.json` is the committed manifest. The pre-commit hook (`.githooks/pre-commit`, enabled by `make setup`) bumps changed components and stages the manifest; `tests/test_versions.py::test_committed_manifest_is_current` catches `--no-verify` commits.
+- System version = git short hash; `+dirty-<fingerprint>` when tracked files under `uw_agent/ sim-harness/ evals/ versions/` differ from HEAD or any component hash differs from the manifest (fingerprint = hash of all live component hashes). Dirty components show as `<version>+dirty`.
+- `system_versions` SQLite table (system version -> components JSON; `register_system_version()` is idempotent; `db.py` will call it) plus `git show <commit>:versions/components.json` for history.
+- Eval results: `evals/results.csv` (committed, append-only), one row per (eval_run_id, seed): system version, dirty flag, seed, difficulty, n_leads, metric columns (new metrics widen the file; old rows get blanks), component versions, runtime config (model id etc., kept out of file hashes because it comes from env), and eval-set descriptors (generator + grader versions). `python -m evals.compare RUN_A RUN_B` prints component changes and metric deltas.
+- The generator is a tracked component because a seed only means the same queue for the same generator code/config (we modified it, D5).
+
+**Trade-offs (accepted):** any content change (even whitespace/comments) bumps the version (content-driven by design). The hook hashes the working tree, not the staged snapshot, so partial staging can mismatch (the test catches it). Model id and other env runtime settings are recorded per run, not versioned as files.

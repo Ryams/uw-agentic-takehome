@@ -1,0 +1,5 @@
+#!/bin/sh
+# Bump component versions in versions/components.json when their content changed (D10).
+# Enable once per clone: `make setup` (git config core.hooksPath .githooks).
+cd "$(git rev-parse --show-toplevel)" || exit 1
+PYTHONPATH=. python3 -m uw_agent.versioning bump --stage || exit 1

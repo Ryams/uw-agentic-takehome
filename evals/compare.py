@@ -1,0 +1,42 @@
+"""Diff two eval runs: component version changes + metric deltas.  usage: python -m evals.compare RUN_A RUN_B"""
+
+from __future__ import annotations
+
+import csv
+import json
+import sys
+from pathlib import Path
+
+from evals.records import BASE_COLUMNS, RESULTS_CSV, TAIL_COLUMNS
+
+
+def _rows(run_id: str, path: Path) -> list[dict[str, str]]:
+    with path.open(newline="") as f:
+        rows = [r for r in csv.DictReader(f) if r["eval_run_id"] == run_id]
+    if not rows:
+        raise SystemExit(f"no rows for eval run {run_id!r} in {path}")
+    return rows
+
+
+def compare(a: str, b: str, path: Path = RESULTS_CSV) -> str:
+    ra, rb = _rows(a, path), _rows(b, path)
+    out = [f"A: {a}  system {ra[0]['system_version']}", f"B: {b}  system {rb[0]['system_version']}", ""]
+    ca, cb = json.loads(ra[0]["components_json"]), json.loads(rb[0]["components_json"])
+    changed = [f"  {n}: {ca.get(n)} -> {cb.get(n)}" for n in sorted(set(ca) | set(cb)) if ca.get(n) != cb.get(n)]
+    out += ["Component changes:"] + (changed or ["  (none)"]) + ["", "Metrics (mean over seeds):"]
+    metric_cols = [c for c in ra[0] if c not in BASE_COLUMNS + TAIL_COLUMNS]
+
+    def mean(rows, col):
+        vals = [float(r[col]) for r in rows if r.get(col, "") != ""]
+        return sum(vals) / len(vals) if vals else None
+    for col in metric_cols:
+        ma, mb = mean(ra, col), mean(rb, col)
+        if ma is not None and mb is not None:
+            out.append(f"  {col}: {ma:.3f} -> {mb:.3f} ({mb - ma:+.3f})")
+    return "\n".join(out)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        raise SystemExit(__doc__)
+    print(compare(sys.argv[1], sys.argv[2]))

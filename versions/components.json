@@ -1,0 +1,113 @@
+{
+  "email_composer": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "evidence_interpreter": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "field_registry": {
+    "content_hash": "234f590abd48",
+    "files": [
+      "sim-harness/shared/field_registry.json"
+    ],
+    "version": 0
+  },
+  "grader": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "leadgen_generator": {
+    "content_hash": "dd72a9493e8d",
+    "files": [
+      "sim-harness/leadgen/__init__.py",
+      "sim-harness/leadgen/archetypes.py",
+      "sim-harness/leadgen/generator.py",
+      "sim-harness/leadgen/generator_config.yaml",
+      "sim-harness/leadgen/main.py",
+      "sim-harness/shared/schema.py"
+    ],
+    "version": 0
+  },
+  "llm_client": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "lookup_tools": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "normalizer": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "orchestrator": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "protocol:general_plumbing": {
+    "content_hash": "19d8c2fae7e9",
+    "files": [
+      "sim-harness/protocols/general_plumbing.json"
+    ],
+    "version": 0
+  },
+  "protocol:swimming_pools": {
+    "content_hash": "2b49550e9999",
+    "files": [
+      "sim-harness/protocols/swimming_pools.json"
+    ],
+    "version": 0
+  },
+  "protocol:trusts_and_llcs_post_bind": {
+    "content_hash": "7293e79d2a10",
+    "files": [
+      "sim-harness/protocols/trusts_and_llcs_post_bind.json"
+    ],
+    "version": 0
+  },
+  "protocol:trusts_and_llcs_quote": {
+    "content_hash": "0d2a769f79a1",
+    "files": [
+      "sim-harness/protocols/trusts_and_llcs_quote.json"
+    ],
+    "version": 0
+  },
+  "protocol:water_heaters": {
+    "content_hash": "95808b956885",
+    "files": [
+      "sim-harness/protocols/water_heaters.json"
+    ],
+    "version": 0
+  },
+  "protocol_engine": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "protocol_manifest": {
+    "content_hash": "3267a583ca37",
+    "files": [
+      "sim-harness/protocols/manifest.json"
+    ],
+    "version": 0
+  },
+  "resolver": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  },
+  "summarizer": {
+    "content_hash": "empty",
+    "files": [],
+    "version": 0
+  }
+}
