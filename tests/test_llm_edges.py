@@ -128,7 +128,7 @@ def test_compose_assembles_exactly_the_planned_asks():
     assert e.used_llm and e.fallback_reason is None and e.to == "producer@example.com"
     body = e.body
     assert body.index("1. What is the roof surface material?") < body.index("2. What is the name of trust?") < body.index("If the pool is fenced:")
-    assert "(choose one: Architecture Shingles / " in body and "(yes / no)" in body       # options appended by code
+    assert "(choose one: Architecture Shingles | " in body and "(yes / no)" in body       # options appended by code
     assert body.count("?") >= 3 and body.rstrip().endswith("Stand Underwriting")
     assert "condition chain" in llm.prompts[0]["user"] and "group_id=1" in llm.prompts[0]["user"]
 

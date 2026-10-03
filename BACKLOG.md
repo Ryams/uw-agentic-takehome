@@ -5,7 +5,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 ## Harness / test data
 - [core] Modify generator to store clean lead in `debug_json` (D5), gated by `DEBUG=true`
 - [core] Reply simulator: answers outbound emails from clean data (`POST /emails/{id}/reply` or poller)
-- [next] Imperfect replies: partial, wrong or off-topic answers to test re-triage
+- [next] More imperfect replies (partial is built; add free-text, wrong-value, off-topic, no reply): partial, wrong or off-topic answers to test re-triage
 
 ## Pre-processing
 - [core] Normalizer: type coercion (e.g. string coverage values), sentinel values (`"Unknown"`) to null
@@ -40,6 +40,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 ## Orchestration / state
 - [core] SQLite schema: leads, runs, decisions + evidence, emails, UW actions
 - [core] Expand blocked derived fields (e.g. roof_classification) into their root inputs (roof_material, roof_replacement_year) via `analyze().pending` before deciding asks
+- [core] Reply parser (LLM second pass for free-text replies; deterministic numbered-line first pass) (D21)
 - [core] Idempotent `process_lead()`: a reply re-triggers re-evaluation from current state
 - [core] Queue ordering: quick wins first, escalations flagged
 - [next] Follow-up cadence: no duplicate emails, nudge on no response

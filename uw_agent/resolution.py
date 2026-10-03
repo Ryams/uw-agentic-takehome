@@ -151,6 +151,8 @@ def analyze(values: dict[str, Any], context: Optional[dict[str, Any]] = None) ->
                     continue
                 reason = f"required when {meta['requiredWhen']}"
             else:
+                if meta["editableByProducer"]:
+                    continue   # R-8: no condition given, so not required to quote (a protocol can still ask for it)
                 reason = "required: conditional"
         if name in derive_pending:
             # can't derive until its inputs are known; those inputs are their own gaps

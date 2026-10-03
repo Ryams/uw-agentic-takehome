@@ -1,11 +1,11 @@
 {
   "email_composer": {
-    "content_hash": "8c51b77f92a2",
+    "content_hash": "b16d7a2479ca",
     "files": [
       "uw_agent/composer.py",
       "uw_agent/prompts/composer.md"
     ],
-    "version": 1
+    "version": 2
   },
   "evidence_interpreter": {
     "content_hash": "c1ec12e782a7",
@@ -41,11 +41,11 @@
     "version": 1
   },
   "llm_client": {
-    "content_hash": "db5a018a69a8",
+    "content_hash": "78d0b3417bb2",
     "files": [
       "uw_agent/llm.py"
     ],
-    "version": 1
+    "version": 2
   },
   "lookup_tools": {
     "content_hash": "bf340ce5e386",
@@ -74,13 +74,21 @@
     ],
     "version": 1
   },
+  "offline_llm": {
+    "content_hash": "06f76e432cb4",
+    "files": [
+      "uw_agent/offline_llm.py"
+    ],
+    "version": 0
+  },
   "orchestrator": {
-    "content_hash": "a399e2e000b7",
+    "content_hash": "fbe7f6780f5d",
     "files": [
       "uw_agent/harness.py",
-      "uw_agent/intake.py"
+      "uw_agent/intake.py",
+      "uw_agent/orchestrator.py"
     ],
-    "version": 1
+    "version": 2
   },
   "protocol:general_plumbing": {
     "content_hash": "19d8c2fae7e9",
@@ -146,13 +154,29 @@
     ],
     "version": 2
   },
+  "reply_parser": {
+    "content_hash": "cde54d17b764",
+    "files": [
+      "uw_agent/prompts/reply_parser.md",
+      "uw_agent/replies.py"
+    ],
+    "version": 0
+  },
+  "reply_simulator": {
+    "content_hash": "d60889f842c2",
+    "files": [
+      "uw_agent/replysim.py"
+    ],
+    "version": 0
+  },
   "resolver": {
-    "content_hash": "88e5ac11f10e",
+    "content_hash": "eac08e90ead0",
     "files": [
       "sim-harness/shared/field_resolution.json",
+      "uw_agent/executor.py",
       "uw_agent/resolution.py"
     ],
-    "version": 2
+    "version": 3
   },
   "summarizer": {
     "content_hash": "828f58726476",

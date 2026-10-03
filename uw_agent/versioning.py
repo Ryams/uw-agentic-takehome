@@ -33,7 +33,7 @@ PROTOCOL_MANIFEST = "sim-harness/protocols/manifest.json"
 # fine: the component hashes as empty until they appear (then its version bumps).
 STATIC_COMPONENTS: dict[str, list[str]] = {
     "normalizer": ["uw_agent/normalize.py"],
-    "resolver": ["uw_agent/resolution.py", "sim-harness/shared/field_resolution.json"],
+    "resolver": ["uw_agent/resolution.py", "uw_agent/executor.py", "sim-harness/shared/field_resolution.json"],
     "protocol_engine": ["uw_agent/protocols/engine.py", "uw_agent/protocols/expr.py"],
     "protocol_manifest": [PROTOCOL_MANIFEST],
     "field_registry": ["sim-harness/shared/field_registry.json"],
@@ -42,6 +42,9 @@ STATIC_COMPONENTS: dict[str, list[str]] = {
     "evidence_interpreter": ["uw_agent/interpreter.py", "uw_agent/prompts/interpreter*.md"],
     "email_composer": ["uw_agent/composer.py", "uw_agent/prompts/composer*.md"],
     "summarizer": ["uw_agent/summarizer.py", "uw_agent/prompts/summar*.md"],
+    "reply_parser": ["uw_agent/replies.py", "uw_agent/prompts/reply*.md"],
+    "reply_simulator": ["uw_agent/replysim.py"],
+    "offline_llm": ["uw_agent/offline_llm.py"],
     "orchestrator": ["uw_agent/orchestrator.py", "uw_agent/intake.py", "uw_agent/harness.py"],
     "mock_vendors": ["sim-harness/vendors/*.py", "sim-harness/shared/vendor_evidence.py",
                      "sim-harness/leadgen/vendor_data.py"],

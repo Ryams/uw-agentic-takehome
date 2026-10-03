@@ -98,9 +98,21 @@ def _label(name: str) -> str:
 
 
 def describe_when(src: str) -> str:
-    """Plain-English-ish reading of a simple condition, e.g. `pool_security == "Fenced"` -> 'Pool Security is Fenced'."""
-    parts = [f"{_label(f)} {'is' if op in ('==', 'in') else 'is not' if op == '!=' else op} {lit}"
-             for f, op, lit in parse(src).literals()]
+    """Plain-English-ish reading of a simple condition, e.g. `pool_security == "Fenced"` -> 'Pool Security is Fenced';
+    `x in ("a","b")` -> 'X is a or b'; toggles read 'yes'/'no'. Used for the template email and as a hint to the model."""
+    by_field: dict[str, list[tuple[str, Any]]] = {}
+    for f, op, lit in parse(src).literals():
+        by_field.setdefault(f, []).append((op, lit))
+    parts = []
+    for f, items in by_field.items():
+        lab = _label(f).rstrip("?")
+        if len(items) > 1 and all(op == "in" for op, _ in items):
+            parts.append(f"{lab} is " + ", ".join(str(l) for _, l in items[:-1]) + f" or {items[-1][1]}")
+            continue
+        for op, lit in items:
+            val = ("yes" if lit else "no") if isinstance(lit, bool) else lit
+            rel = {"==": "is", "in": "is", "!=": "is not", ">": ">", ">=": ">=", "<": "<", "<=": "<="}.get(op, op)
+            parts.append(f"{lab} {rel} {val}")
     return " and ".join(parts) if parts else src
 
 
@@ -110,10 +122,24 @@ def describe_chain(chain: list[dict[str, str]]) -> str:
 
 def _answer_hint(a: Ask) -> str:
     if a.kind == "select" and a.options:
-        return " (choose one: " + " / ".join(str(o) for o in a.options) + ")"
+        return " (choose one: " + " | ".join(str(o) for o in a.options) + ")"
     if a.kind == "toggle":
         return " (yes / no)"
     return ""
+
+
+def numbered_asks(plan: EmailPlan) -> list[dict[str, Any]]:
+    """The exact numbering used in the email body: [{n, field, group_id, whens}] (stored with the sent email
+    so a reply can be mapped back to fields)."""
+    out, n = [], 0
+    for a in plan.asks:
+        n += 1
+        out.append({"n": n, "field": a.field, "group_id": 0, "whens": []})
+    for g in plan.groups:
+        for a in g.asks:
+            n += 1
+            out.append({"n": n, "field": a.field, "group_id": g.id, "whens": [c["when"] for c in g.chain]})
+    return out
 
 
 def assemble(plan: EmailPlan, c: ComposedEmail) -> Email:
@@ -133,14 +159,18 @@ def assemble(plan: EmailPlan, c: ComposedEmail) -> Email:
     return Email(plan.lead_id, plan.to, c.subject.strip(), "\n".join(lines).strip() + "\n", used_llm=True)
 
 
+def _q(label: str) -> str:
+    return label if label.rstrip().endswith("?") else f"{label}?"
+
+
 def template_email(plan: EmailPlan, reason: Optional[str] = None) -> Email:
     """Deterministic email: field labels as questions. Always valid; the baseline the LLM must beat."""
     c = ComposedEmail(
         subject=f"Information needed to quote {plan.address} ({plan.lead_id})",
         greeting="Hello,",
         intro=f"To finish quoting {plan.address}, we need the following information:",
-        questions=[ComposedQuestion(field=a.field, group_id=0, question=f"{a.label}?") for a in plan.asks]
-        + [ComposedQuestion(field=a.field, group_id=g.id, question=f"{a.label}?") for g in plan.groups for a in g.asks],
+        questions=[ComposedQuestion(field=a.field, group_id=0, question=_q(a.label)) for a in plan.asks]
+        + [ComposedQuestion(field=a.field, group_id=g.id, question=_q(a.label)) for g in plan.groups for a in g.asks],
         group_lead_ins=[GroupLeadIn(group_id=g.id, lead_in=f"If {g.hint}") for g in plan.groups],
         closing="A single reply covering everything is ideal. Thank you.",
     )

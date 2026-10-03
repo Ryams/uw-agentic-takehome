@@ -12,6 +12,7 @@ class FakeLLM:
 
     def __init__(self, script: dict[str, Any]):
         self.script, self.prompts, self.calls = script, [], []
+        self.last_call = None
 
     def structured(self, *, task, system, user, schema, effort="low", max_tokens=2000):
         self.prompts.append({"task": task, "system": system, "user": user, "schema": schema, "effort": effort})
@@ -22,7 +23,8 @@ class FakeLLM:
             s = s(user, system)
         if isinstance(s, Exception):
             raise s
-        self.calls.append(CallRecord(task, "fake", effort))
+        self.last_call = CallRecord(task, "fake", effort)
+        self.calls.append(self.last_call)
         return s
 
     def runtime_config(self):

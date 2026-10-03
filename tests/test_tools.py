@@ -140,7 +140,7 @@ def test_vendor_tables_hold_truth_but_public_lead_payload_does_not(queue):
 
 # --- boundary: only the reply simulator and evals may touch ground truth (D5/D19) ---------------------
 
-TRUTH_ALLOWED = {"truth.py", "replysim.py"}
+TRUTH_ALLOWED = {"truth.py", "replysim.py", "cli.py"}   # cli.py = demo driver that wires the reply simulator; no workflow module may import truth
 
 
 def test_workflow_cannot_reach_ground_truth():

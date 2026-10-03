@@ -12,6 +12,7 @@ control, so we set it per task), no sampling params, no forced tool use (hence s
 
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Optional, Protocol, TypeVar
@@ -60,6 +61,12 @@ class AnthropicLLM:
     client: Any = None
     calls: list[CallRecord] = field(default_factory=list)
     efforts: dict[str, str] = field(default_factory=dict)
+    _tl: Any = field(default_factory=threading.local, repr=False)
+
+    @property
+    def last_call(self) -> Optional[CallRecord]:
+        """The calling thread's most recent call (lets parallel workers attribute usage to their lead)."""
+        return getattr(self._tl, "rec", None)
 
     def __post_init__(self) -> None:
         if self.client is None:
@@ -80,13 +87,15 @@ class AnthropicLLM:
         except anthropic.APIError as e:  # SDK already retried 408/409/429/5xx
             raise LLMError(f"{task}: API error: {e}") from e
         usage = getattr(resp, "usage", None)
-        self.calls.append(CallRecord(
+        rec = CallRecord(
             task, model, effort,
             input_tokens=getattr(usage, "input_tokens", 0) or 0,
             output_tokens=getattr(usage, "output_tokens", 0) or 0,
             cache_read_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0,
             request_id=getattr(resp, "_request_id", None), latency_s=round(time.time() - t0, 3),
-            stop_reason=resp.stop_reason))
+            stop_reason=resp.stop_reason)
+        self.calls.append(rec)
+        self._tl.rec = rec
         if resp.stop_reason == "refusal":
             raise LLMRefusal(f"{task}: model declined ({getattr(resp, 'stop_details', None)})")
         if resp.stop_reason == "max_tokens":

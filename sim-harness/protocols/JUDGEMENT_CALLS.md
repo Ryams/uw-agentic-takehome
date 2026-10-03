@@ -79,3 +79,11 @@ Cross-protocol calls are under "Global".
 - **L-1 (assumed):** Ambiguous or unclear imagery does not set a value. The playbook default ("assume no") applies, and the assumption is flagged low-confidence for the underwriter instead of asking the producer. *Why:* the callout says assume no when nothing conclusive is seen; asking would add emails the playbook does not call for. Revisit if wrong assumptions are costly.
 - **L-2 (assumed):** The default model for all three LLM tasks is `claude-sonnet-5-5` at `low` effort (cost-conscious, tasks are short and constrained); override per task via env. The eval milestone should compare models/efforts on the same fixed sets.
 - **L-3 (assumed):** The composer addresses the producer generically ("Hello,"); quote conditions (e.g. "confirm Class A within 60 days") appear on the dashboard and quote, not in the follow-up email, which asks only for missing information.
+
+## Orchestration (O-*)
+- **O-1 / R-8 (assumed):** A producer-editable field marked "conditional" in the registry but with no `requiredWhen` is not required to quote (the registry gives no condition and the generator's ground truth leaves it empty, e.g. `opening_protection`, `listed_for_sale`); a protocol can still ask for it. System-owned conditional fields without a condition (e.g. `replacement_cost`) are still auto-fetched.
+- **O-2 (assumed):** Conflicts go to the underwriter ("verify"), not into the producer email. Alternative: also ask the producer to confirm the conflicting values in the same email.
+- **O-3 (assumed):** An email still goes out for missing producer info when a lead is also flagged for the underwriter (conflict/escalation); the underwriter sees both. Alternative: hold the email until the underwriter acts.
+- **O-4 (assumed):** Assuming a value changes what is required: assuming PC 9 (PPC lookup failed) makes the four PC 9/10 conditional fields required, so the producer is asked for them.
+- **O-5 (assumed):** Default recipient for follow-ups is the lead's `owner_email` when present, else a generic producer address; routing to agent vs homeowner vs internal team is on the backlog.
+- **O-6 (assumed):** A conditional ask that is only relevant on a deeper path gets its own group with the full chain ("If Water Heater Type is Tank and Water Heater Age > 10").

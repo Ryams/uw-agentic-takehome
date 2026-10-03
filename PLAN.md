@@ -7,7 +7,7 @@
 > - [x] 2. Pre-processing + resolution (done; D12)
 > - [x] 3. Tools (mock vendors service, fetch, lookup; D19)
 > - [x] 4. LLM edges (done offline-tested; live smoke test pending API key; D20)
-> - [ ] 5. Orchestrator + state + reply loop
+> - [x] 5. Orchestrator + state + reply loop (done; D21)
 > - [ ] 6. API + web UI
 > - [ ] 7. Evals
 > - [ ] 8. Docs
