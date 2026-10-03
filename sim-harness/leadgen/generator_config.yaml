@@ -1,0 +1,33 @@
+# Tunable difficulty knobs for the leadgen service.
+# Interviewers can re-tune difficulty here without touching code.
+
+queue:
+  count: 10
+  tier_mix:          # how many of the `count` leads land in each tier (mixed difficulty)
+    easy: 2
+    medium: 4
+    hard: 4
+  guarantee_hard_archetypes: 4   # at least N leads MUST carry a hard archetype
+
+# Probability a given field is nulled / made ambiguous, per tier.
+#   missing_required      -> producer-editable, always-required fields  (forces ONE clear email)
+#   missing_system_owned  -> editableByProducer:false fields            (forces auto-fetch/derive)
+#   conflict              -> chance of a present-but-inconsistent value (forces human verify)
+perturbation_rates:
+  easy:   { missing_required: 0.05, missing_system_owned: 0.30, conflict: 0.00 }
+  medium: { missing_required: 0.20, missing_system_owned: 0.60, conflict: 0.15 }
+  hard:   { missing_required: 0.40, missing_system_owned: 0.85, conflict: 0.35 }
+
+# Named hard failure-mode scenarios (see archetypes.py), with relative weights.
+# A hard lead draws 1-2; a medium lead draws <=1; an easy lead draws none.
+archetypes:
+  electrical_hazard:     { weight: 10 }   # knob & tube, Federal Pacific panel, amps<120, pre-1950
+  pc_9_10_rural:         { weight: 10 }   # far FD, volunteer, no hydrant, PC null(->9), limited road access
+  wildfire_severe:       { weight: 10 }   # roof_material & roof_classification null, p_f>0.5, wood shake, min_dist<15, slope, veg Too Close
+  replacement_cost_gap:  { weight:  8 }   # replacement_cost null, coverage_a well off RCE; sometimes >150% (fraud-suspect)
+  occupancy_conflict:    { weight:  8 }   # owner-occupied but vacant/short-term/secondary signals
+  trust_llc:             { weight:  7 }   # held in trust; trust_name sometimes null; exposure screening
+  post_and_pier:         { weight:  6 }   # foundation Piers, supports living area OR deck_height>12
+  plumbing_water_heater: { weight:  6 }   # tank WH age>10 in finished space; plumbing_age>30
+  pool_hazard:           { weight:  5 }   # inground pool, security Unfenced/null
+  profile_kyc:           { weight:  5 }   # kyc_score>5 or null ("in spotlight")

@@ -1,0 +1,32 @@
+services:
+  leadgen:
+    build:
+      context: .
+      dockerfile: leadgen/Dockerfile
+    ports: ["8081:8080"]            # 8081 = leadgen API
+    environment:
+      SEED: "${SEED:-}"
+      COUNT: "${COUNT:-10}"
+      DIFFICULTY: "${DIFFICULTY:-mixed}"
+      DEBUG: "${DEBUG:-false}"
+      LEADGEN_DB: "/data/leadgen.db"
+    volumes: ["./data:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  mailbox:
+    build:
+      context: .
+      dockerfile: mailbox/Dockerfile
+    ports: ["8025:8080"]            # 8025 = inbox UI + API
+    environment:
+      MAILBOX_DB: "/data/mailbox.db"
+    volumes: ["./data:/data"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
