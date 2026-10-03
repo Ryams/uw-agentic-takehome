@@ -43,6 +43,9 @@ class LeadDebug(BaseModel):
     difficulty: str
     injected_archetypes: list[str]
     perturbations: list[Perturbation]
+    # Ground truth: the lead as it would look with nothing missing/conflicting
+    # (archetype-consistent). For eval harness / reply simulator only (D5).
+    clean_fields: dict[str, Any] = Field(default_factory=dict)
 
 
 class QueueResponse(BaseModel):

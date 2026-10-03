@@ -24,9 +24,22 @@ def _set(fields: dict[str, Any], touches: list[Touch], field: str, value: Any, d
     touches.append({"field": field, "kind": "archetype_set", "detail": detail})
 
 
-def _null(fields: dict[str, Any], touches: list[Touch], field: str, detail: str) -> None:
+_UNSET: Any = object()
+
+
+def _null(fields: dict[str, Any], touches: list[Touch], field: str, detail: str,
+          truth: Any = _UNSET) -> None:
+    """Null a field the agent must resolve.
+
+    `truth` is what the homeowner/third party would actually answer; it is the
+    ground truth consumed by the eval harness and reply simulator (never shown to
+    the agent). Defaults to the pre-null value. Truth values are constants, NOT RNG
+    draws, so adding them does not change any seeded queue.
+    """
+    old = fields.get(field)
     fields[field] = None
-    touches.append({"field": field, "kind": "archetype_null", "detail": detail})
+    touches.append({"field": field, "kind": "archetype_null", "detail": detail,
+                    "truth": old if truth is _UNSET else truth})
 
 
 # --- archetypes -----------------------------------------------------------
@@ -42,7 +55,7 @@ def electrical_hazard(fields: dict[str, Any], rng: random.Random) -> list[Touch]
         _set(fields, t, "electrical_panel_size_amps", rng.choice([60, 100]), "undersized service")
     else:
         # Producer-editable always-required -> forces a clear email.
-        _null(fields, t, "electrical_panel_size_amps", "panel size unknown; ask producer")
+        _null(fields, t, "electrical_panel_size_amps", "panel size unknown; ask producer", truth=100)
     return t
 
 
@@ -53,10 +66,10 @@ def pc_9_10_rural(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     _set(fields, t, "fire_department_type", "Volunteer", "volunteer department")
     _set(fields, t, "dist_to_nearest_fire_hydrant", rng.randint(2000, 9000), "no nearby hydrant")
     # System-owned -> agent must derive/assume (missingDefault 9), NOT email.
-    _null(fields, t, "protection_class", "PPC unknown; assume 9 (system-owned)")
+    _null(fields, t, "protection_class", "PPC unknown; assume 9 (system-owned)", truth="9")
     _set(fields, t, "road_access", "Limited / Dead-end / No Turnaround", "poor road access")
     # PC 9/10 makes these conditional fields required; leave one unanswered.
-    _null(fields, t, "fire_dept_response_time", "required when PC 9/10; ask producer")
+    _null(fields, t, "fire_dept_response_time", "required when PC 9/10; ask producer", truth="Greater than 30 Minutes")
     return t
 
 
@@ -64,8 +77,8 @@ def wildfire_severe(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     """Severe WUI exposure with the roof-material -> roof-class dependency chain."""
     t: list[Touch] = []
     # Dependency chain: can't derive class until upstream material is resolved.
-    _null(fields, t, "roof_material", "roof material unknown; ask producer (blocks roof class)")
-    _null(fields, t, "roof_classification", "derivedFrom roof_material; can't derive yet")
+    _null(fields, t, "roof_material", "roof material unknown; ask producer (blocks roof class)", truth="Wood Shake")
+    _null(fields, t, "roof_classification", "derivedFrom roof_material; can't derive yet", truth="Class C")
     _set(fields, t, "siding_material", "Wood Shake / Shingle", "combustible siding")
     _set(fields, t, "siding_classification", "D", "worst siding fire class")
     _set(fields, t, "p_f", round(rng.uniform(0.55, 0.9), 2), "high probability of failure")
@@ -112,7 +125,7 @@ def trust_llc(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     t: list[Touch] = []
     _set(fields, t, "residence_held_in_trust", True, "property held in trust")
     if rng.random() < 0.6:
-        _null(fields, t, "trust_name", "trust name required when held in trust; ask producer")
+        _null(fields, t, "trust_name", "trust name required when held in trust; ask producer", truth="Redwood Holdings Trust")
     else:
         _set(fields, t, "trust_name", rng.choice(
             ["The Calloway Family Trust", "Redwood Holdings Trust", "Marin Living Trust"]),
@@ -126,10 +139,10 @@ def post_and_pier(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     _set(fields, t, "foundation_type", "Piers", "post & pier foundation")
     if rng.random() < 0.5:
         _set(fields, t, "post_pier_supports_living_area", True, "piers support living area")
-        _null(fields, t, "deck_height_ft", "deck height unknown; ask producer")
+        _null(fields, t, "deck_height_ft", "deck height unknown; ask producer", truth=4)
     else:
         _set(fields, t, "deck_height_ft", rng.randint(13, 28), "tall deck above grade")
-        _null(fields, t, "post_pier_supports_living_area", "support detail unknown; ask producer")
+        _null(fields, t, "post_pier_supports_living_area", "support detail unknown; ask producer", truth=False)
     return t
 
 
@@ -142,7 +155,7 @@ def plumbing_water_heater(fields: dict[str, Any], rng: random.Random) -> list[To
     if rng.random() < 0.5:
         _set(fields, t, "water_heater_age_years", rng.randint(11, 22), "old water heater")
     else:
-        _null(fields, t, "water_heater_age_years", "WH age required for tank; ask producer")
+        _null(fields, t, "water_heater_age_years", "WH age required for tank; ask producer", truth=12)
     return t
 
 
@@ -153,7 +166,7 @@ def pool_hazard(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     if rng.random() < 0.5:
         _set(fields, t, "pool_security", "Unfenced", "pool not fenced")
     else:
-        _null(fields, t, "pool_security", "pool security required when pool present; ask producer")
+        _null(fields, t, "pool_security", "pool security required when pool present; ask producer", truth="Unfenced")
     _set(fields, t, "pool_has_diving_board_or_slide", True, "diving board / slide present")
     return t
 
@@ -164,7 +177,7 @@ def profile_kyc(fields: dict[str, Any], rng: random.Random) -> list[Touch]:
     if rng.random() < 0.5:
         _set(fields, t, "kyc_score", rng.randint(6, 10), "elevated KYC score ('in spotlight')")
     else:
-        _null(fields, t, "kyc_score", "KYC score unknown; system lookup (system-owned)")
+        _null(fields, t, "kyc_score", "KYC score unknown; system lookup (system-owned)", truth=4)
     return t
 
 

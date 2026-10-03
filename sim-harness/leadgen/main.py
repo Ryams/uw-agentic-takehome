@@ -163,6 +163,7 @@ def get_lead_debug(lead_id: str) -> LeadDebug:
         difficulty=debug["difficulty"],
         injected_archetypes=debug["injected_archetypes"],
         perturbations=[Perturbation(**p) for p in debug["perturbations"]],
+        clean_fields=debug.get("clean_fields", {}),
     )
 
 

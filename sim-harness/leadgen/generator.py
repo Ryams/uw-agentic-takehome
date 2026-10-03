@@ -7,6 +7,7 @@ reproduces an identical queue.
 
 from __future__ import annotations
 
+import copy
 import random
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -266,6 +267,21 @@ def _tier_sequence(rng: random.Random, count: int, difficulty: str,
     return seq
 
 
+def _fold_truth(clean: dict[str, Any], touches: list[dict[str, Any]]) -> None:
+    """Fold archetype touches into the ground-truth fields, then strip `truth`
+    from the touch records (the answer key's perturbation schema has no such key).
+
+    archetype_set -> truth is the value the archetype set (already in `clean` if
+    `clean` was snapshotted after the set; applied here for the retrofit path);
+    archetype_null -> truth is the intended hidden value.
+    """
+    for t in touches:
+        if t["kind"] == "archetype_null":
+            clean[t["field"]] = t.pop("truth", None)
+        else:
+            t.pop("truth", None)
+
+
 def generate_lead(rng: random.Random, seed: int, index: int, tier: str,
                   config: dict[str, Any]) -> dict[str, Any]:
     """Generate one lead. Returns {lead_id, received_at, source, fields, debug}."""
@@ -280,6 +296,12 @@ def generate_lead(rng: random.Random, seed: int, index: int, tier: str,
         touches = archetypes.ARCHETYPES[name](fields, rng)
         perturbations.extend(touches)
         owned.update(t["field"] for t in touches)
+
+    # Ground truth (eval/grader only, DEBUG-gated): the archetype-consistent lead
+    # BEFORE random nulling/conflicts. Taken after archetypes so hazard fields keep
+    # their intended values; archetype-nulled fields get their `truth` value.
+    clean = copy.deepcopy(fields)
+    _fold_truth(clean, perturbations)
 
     perturbations.extend(_apply_perturbations(fields, rng, tier, rates, owned))
 
@@ -302,6 +324,7 @@ def generate_lead(rng: random.Random, seed: int, index: int, tier: str,
             "difficulty": tier,
             "injected_archetypes": injected,
             "perturbations": perturbations,
+            "clean_fields": clean,
         },
     }
 
@@ -327,6 +350,11 @@ def generate_queue(seed: int, count: int, difficulty: str,
             if not name:
                 break
             touches = archetypes.ARCHETYPES[name[0]](ld["fields"], rng)
+            # Retrofit: archetype_set values go into truth too (nulled fields get `truth`).
+            for t in touches:
+                if t["kind"] == "archetype_set":
+                    ld["debug"]["clean_fields"][t["field"]] = ld["fields"][t["field"]]
+            _fold_truth(ld["debug"]["clean_fields"], touches)
             ld["debug"]["injected_archetypes"] = name
             ld["debug"]["perturbations"].extend(touches)
             errors = registry.validate_lead_fields(ld["fields"])
