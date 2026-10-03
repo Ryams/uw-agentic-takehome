@@ -130,6 +130,7 @@ const toast = (m) => { const t = $("#toast"); t.textContent = m; t.classList.add
 const store = { get(k, d) { try { return localStorage.getItem(k) ?? d } catch (e) { return d } }, set(k, v) { try { localStorage.setItem(k, v) } catch (e) {} } };
 
 let state = { run: null, leads: [], sel: null, timer: null };
+const human = x => String(x ?? "").replace(/_/g, " ").toLowerCase().replace(/^ok /, "OK ");
 const DECISION = { quote: ["ok", "Quote"], quote_with_conditions: ["warn", "Quote with conditions"], decline: ["bad", "Decline"], escalate: ["hold", "Escalate"] };
 const GROUPS = [
   ["ready_to_quote", "Ready to quote", "Agent has everything it needs. Approve, or look closer at the ones with conditions."],
@@ -145,7 +146,8 @@ function cardHtml(l) {
   const dec = DECISION[l.decision];
   const chips = [];
   if (l.uw_status) chips.push(chip("ok", l.uw_status.replace("_", " ")));
-  else if (dec) chips.push(chip(dec[0], (l.provisional ? "provisional: " : "") + dec[1]));
+  else if (dec) chips.push(chip(dec[0], (l.provisional ? "so far: " : "") + dec[1]));
+  else if (l.provisional_decision && DECISION[l.provisional_decision]) chips.push(chip("", "so far: " + DECISION[l.provisional_decision][1] + " (questions outstanding)"));
   l.reasons.filter(r => r !== "email_draft").forEach(r => chips.push(chip("hold", REASON[r] || r)));
   if (l.reasons.includes("email_draft")) chips.push(chip("info", "draft email to review"));
   if (l.conditions.length) chips.push(chip("warn", `${l.conditions.length} condition${l.conditions.length > 1 ? "s" : ""} to wait on`));
@@ -198,9 +200,13 @@ function detailHtml(d) {
   let h = `<div class="inner"><button class="btn back" id="back">← Queue</button>
     <h2 style="margin:0">${esc(rep.address || c.lead_id)}</h2>
     <div class="muted mono">${esc(c.lead_id)} · round ${dec.round} · decided by ${esc(rep.system_version)}</div>
-    <div class="chips" style="margin:8px 0">${decc ? chip(decc[0], (rep.provisional ? "provisional: " : "") + decc[1]) : chip("hold", "no decision yet")}${c.uw_status ? chip("ok", c.uw_status.replace("_", " ")) : ""}</div>
+    <div class="chips" style="margin:8px 0">${decc ? chip(decc[0], (rep.provisional ? "so far: " : "") + decc[1]) : (DECISION[rep.provisional_decision] ? chip("", "so far: " + DECISION[rep.provisional_decision][1] + " (questions outstanding)") : chip("hold", "no decision yet"))}${c.uw_status ? chip("ok", c.uw_status.replace("_", " ")) : ""}</div>
     <div class="callout ${c.state === "needs_uw" ? "" : "ok"}"><b>${esc(sum.headline || "")}</b>${(sum.rationale || []).map(x => `<div>• ${esc(x)}</div>`).join("")}
       ${sum.suggested_action ? `<div style="margin-top:4px"><b style="display:inline">Next:</b> ${esc(sum.suggested_action)}</div>` : ""}</div>`;
+  if (rep.asks.length) {
+    h += `<h3>${c.state === "awaiting_reply" ? "What we're waiting on" : "Questions asked"}</h3><div class="callout"><b>${rep.asks.length} question${rep.asks.length > 1 ? "s" : ""} to the producer, one email</b>` +
+      rep.asks.map(a => `<div>• ${esc(a.label.replace(/\?$/, ""))}${a.conditional ? ` <i class="muted">(only if ${esc(a.if)})</i>` : ""} <span class="muted">${a.needed_for && a.needed_for.length ? "→ unblocks " + a.needed_for.map(x => esc(human(x))).join(", ") : "→ required to quote"}</span></div>`).join("") + `</div>`;
+  }
   if (rep.reasons.length) {
     h += `<h3>Why this needs you</h3>` + rep.reasons.map(r => {
       if (r.type === "conflict") return `<div class="callout warn"><b>Data conflict</b>${r.conflicts.map(x => `<div>${esc(x.message)} <span class="muted mono">(${esc(x.fields.join(", "))})</span></div>`).join("")}</div>`;
@@ -231,7 +237,8 @@ function detailHtml(d) {
   h += listOrNone(rep.derived, x => `<div class="callout"><b>${esc(x.field)} = ${esc(x.value)} (derived)</b>${esc(x.why)}</div>`);
 
   // protocols
-  h += `<h3>Playbook results</h3>` + rep.protocols.map(p => `<details><summary>${chip(p.status === "decided" ? "ok" : p.status === "blocked" ? "warn" : "", p.status)} <b>${esc(p.protocol)}</b> <span class="muted">${esc(p.outcome || (p.blocked_on || []).join(", "))}</span></summary>
+  const pstat = p => p.status === "blocked" ? ["warn", "waiting"] : p.status === "not_applicable" ? ["", "n/a"] : p.decision === "quote" ? ["ok", "passes"] : p.decision === "decline" ? ["bad", "decline"] : ["warn", p.decision === "escalate" ? "escalate" : "passes with condition"];
+  h += `<h3>Playbook checks</h3>` + rep.protocols.map(p => `<details><summary>${chip(...pstat(p))} <b>${esc(human(p.protocol))}</b> <span class="muted">${esc(p.status === "blocked" ? "waiting on: " + (p.blocked_on || []).join(", ") : human(p.outcome || ""))}</span></summary>
       <div class="body">${p.path.length ? pathHtml(p) : '<span class="muted">does not apply</span>'}${p.conditions.length ? p.conditions.map(x => `<div>→ ${esc(x)}</div>`).join("") : ""}</div></details>`).join("");
   if (rep.skipped_protocols.length) h += `<div class="muted">Not evaluated after a decline: ${esc(rep.skipped_protocols.join(", "))}</div>`;
 

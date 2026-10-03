@@ -277,3 +277,26 @@ def test_numbering_in_metadata_matches_the_email_body():
     for a in numbered_asks(plan):
         assert f"{a['n']}. " in body
     assert [a["field"] for a in numbered_asks(plan)] == ["roof_material", "water_heater_age_years"]
+
+
+def test_waiting_lead_explains_what_passes_and_what_blocks_each_check(tmp_path):
+    def m(f):
+        f["water_heater_type"] = None
+        f["water_heater_age_years"] = None
+        f["water_heater_location"] = None
+        f["roof_material"] = None
+        f["roof_classification"] = None
+    w, lid = one_lead_world(tmp_path, m)
+    rid = w.start()
+    orch.process_lead(w.ctx, rid, lid)
+    d = w.ctx.db.latest_decision(rid, lid)
+    asks = {a["label"]: a for a in d["report"]["asks"]}
+    assert asks["Water Heater Type"]["needed_for"] == ["water_heaters"]
+    assert asks["Water Heater Age (years)"]["conditional"] is True
+    assert "roof_class" in asks["Roof Surface Material"]["needed_for"]        # derived blocker mapped to its real input
+    assert d["report"]["provisional_decision"] in ("quote", "quote_with_conditions")
+    text = " ".join(d["summary"]["rationale"])
+    assert "Pass with the data so far" in text and "general plumbing" in text   # what already passes, in plain words
+    assert "water heaters (needs Water Heater Type" in text and "roof class (needs Roof Surface Material" in text
+    assert "roof_classification" not in text and "OK_TO_QUOTE" not in text    # no raw ids or codes
+    assert d["summary"]["headline"].startswith("Waiting on the producer")

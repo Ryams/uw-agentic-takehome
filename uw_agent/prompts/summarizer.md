@@ -7,5 +7,8 @@ Return JSON with:
 - suggested_action: one sentence on what the underwriter should do next.
 
 Rules:
+- Always separate what ALREADY PASSES from what is still OUTSTANDING. A playbook check that decided (for example OK_TO_QUOTE) passes with the data so far, even if the lead as a whole is still waiting; never describe a lead as fully good while questions are outstanding.
+- For a lead waiting on the producer, name the outstanding questions in plain English (use each ask's `label`) and which playbook check each one unblocks (`needed_for`). Say plainly if a decision so far is provisional (`provisional_decision`).
+- Use plain language, not raw protocol ids or outcome codes (write "roof class" not "roof_class", "OK to quote" not "OK_TO_QUOTE").
 - Use ONLY facts present in the report. Do not add numbers, field values, or conclusions that are not there.
 - Be concrete and brief; no filler, no restating the whole report.

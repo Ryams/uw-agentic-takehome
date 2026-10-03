@@ -82,13 +82,13 @@
     "version": 0
   },
   "orchestrator": {
-    "content_hash": "fbe7f6780f5d",
+    "content_hash": "c936701bda94",
     "files": [
       "uw_agent/harness.py",
       "uw_agent/intake.py",
       "uw_agent/orchestrator.py"
     ],
-    "version": 2
+    "version": 3
   },
   "protocol:general_plumbing": {
     "content_hash": "19d8c2fae7e9",
@@ -179,11 +179,11 @@
     "version": 3
   },
   "summarizer": {
-    "content_hash": "c9260c3ca58f",
+    "content_hash": "434306a18390",
     "files": [
       "uw_agent/prompts/summarizer.md",
       "uw_agent/summarizer.py"
     ],
-    "version": 2
+    "version": 3
   }
 }

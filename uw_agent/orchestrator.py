@@ -270,6 +270,15 @@ def _process(ctx: Context, run_id: str, lead_id: str, trigger: str, llm: TaggedL
         prio = PRIORITY["quick_win"] if not ev.conditions else PRIORITY["ready"]
     decision = ev.decision if ev.status == "decided" else None
 
+    needed_for: dict[str, list[str]] = {}
+    pending_inputs = {p["field"]: p["waiting_on"] for p in a.pending}
+    for r in ev.results:
+        for f in r.blocked_on:
+            # a blocked derived field (roof_classification) is really waiting on its inputs (roof_material, year)
+            for root in (pending_inputs.get(f, [f]) if f in derived_fields else [f]):
+                needed_for.setdefault(root, []).append(r.protocol)
+        for cb in r.conditional_blockers:
+            needed_for.setdefault(cb.field, []).append(cb.protocol)
     assumptions = [r.assumption for r in attempted.values() if r.assumption and values.get(r.field) is not None]
     report = {
         "lead_id": lead_id, "address": address, "state": state, "decision": decision, "trigger": trigger,
@@ -284,8 +293,11 @@ def _process(ctx: Context, run_id: str, lead_id: str, trigger: str, llm: TaggedL
         "fetched": [e for e in evidence if e.get("step") == "fetch" and e.get("status") == "found"],
         "lookups": [e for e in evidence if e.get("step") == "lookup"],
         "tool_failures": [e for e in evidence if e.get("step") == "fetch" and e.get("status") != "found"],
-        "asks": [{"field": x.field, "label": x.label, "conditional": False} for x in plan.asks]
-                + [{"field": x.field, "label": x.label, "conditional": True, "if": g.hint}
+        "provisional_decision": ev.decision,            # most restrictive among protocols decided so far
+        "asks": [{"field": x.field, "label": x.label, "conditional": False,
+                  "needed_for": list(dict.fromkeys(needed_for.get(x.field, [])))} for x in plan.asks]
+                + [{"field": x.field, "label": x.label, "conditional": True, "if": g.hint,
+                    "needed_for": list(dict.fromkeys(needed_for.get(x.field, [])))}
                    for g in plan.groups for x in g.asks],
         "deferred": a.deferred, "normalization_notes": norm.notes, "invalid_inputs": norm.invalid,
         "answers_received": answers, "email_status": email_status,

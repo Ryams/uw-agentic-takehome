@@ -72,7 +72,7 @@ def create_app(ctx: orch.Context, simulate: Optional[Callable[[list[str], str], 
             "n_asks": len(rep.get("asks", [])), "conditions": rep.get("conditions", []),
             "n_assumptions": len(rep.get("assumptions", [])), "n_low_confidence": len(low),
             "n_conflicts": len(rep.get("conflicts", [])), "email_status": rep.get("email_status"),
-            "provisional": rep.get("provisional", False), "uw_status": row["uw_status"], "uw_decision": row["uw_decision"],
+            "provisional": rep.get("provisional", False), "provisional_decision": rep.get("provisional_decision"), "uw_status": row["uw_status"], "uw_decision": row["uw_decision"],
         }
 
     def run_info(run_id: str) -> dict[str, Any]:

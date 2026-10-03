@@ -29,6 +29,45 @@ REASON_TEXT = {"conflict": "data conflict to verify", "decline": "proposed decli
                "email_draft": "email draft to review", "internal_error": "internal error"}
 
 
+def _name(protocol: str) -> str:
+    return protocol.replace("_", " ")
+
+
+def _rationale(report: dict[str, Any]) -> list[str]:
+    """Plain statements that separate what already passes from what is still outstanding (never truncated)."""
+    passing, conditions, waiting, not_applicable = [], [], [], []
+    for p in report.get("protocols", []):
+        if p["status"] == "not_applicable":
+            not_applicable.append(_name(p["protocol"]))
+        elif p["status"] == "blocked":
+            waiting.append(p)
+        elif p.get("decision") == "quote":
+            passing.append(_name(p["protocol"]))
+        elif p.get("decision") in ("quote_with_conditions", "decline", "escalate"):
+            conditions.append(f"{_name(p['protocol'])} ({p.get('outcome', '').lower().replace('_', ' ')})")
+    out = []
+    if passing:
+        out.append("Pass with the data so far: " + ", ".join(passing) + ".")
+    if conditions:
+        out.append("Pass with a condition or need attention: " + "; ".join(conditions) + ".")
+    asks = report.get("asks", [])
+    if waiting or asks:
+        why = {}
+        for a in asks:
+            for proto in a.get("needed_for", []):
+                why.setdefault(_name(proto), []).append(a["label"].rstrip("?"))
+        if waiting:
+            out.append("Still waiting on the producer for: " + "; ".join(
+                f"{_name(p['protocol'])} (needs {', '.join(why.get(_name(p['protocol']), p.get('blocked_on', [])))})"
+                for p in waiting) + ".")
+        other = [a["label"].rstrip("?") for a in asks if not a.get("needed_for")]
+        if other:
+            out.append("Also required to quote: " + ", ".join(other) + ".")
+    if not_applicable:
+        out.append("Not applicable: " + ", ".join(not_applicable) + ".")
+    return out or ["No playbook check has applied yet."]
+
+
 def fallback_summary(report: dict[str, Any]) -> Summary:
     """Deterministic summary from the report (no model)."""
     state, n_asks = report.get("state", ""), len(report.get("asks", []))
@@ -41,13 +80,7 @@ def fallback_summary(report: dict[str, Any]) -> Summary:
         headline = "Needs your decision: " + (reasons[0] if reasons else "review required")
     else:
         headline = "Review this lead"
-    rationale = []
-    for p in report.get("protocols", []):
-        if p.get("outcome"):
-            rationale.append(f"{p['protocol']}: {p['outcome']}")
-        elif p.get("status") == "blocked":
-            rationale.append(f"{p['protocol']}: waiting on {', '.join(p.get('blocked_on', []))}")
-    rationale = rationale[:4] or ["no protocol applied yet"]
+    rationale = _rationale(report)
     unc = [f"assumed {a['field']} = {a['value']} ({a.get('why', 'assumption')})" for a in report.get("assumptions", [])]
     unc += [f"conflict: {c['message']}" for c in report.get("conflicts", [])]
     action = {"ready_to_quote": "Review and approve the quote.", "awaiting_reply": "Wait for the producer's reply.",
