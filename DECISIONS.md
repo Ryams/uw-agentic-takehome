@@ -213,3 +213,11 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Found while building it (fixed in the same milestone):** (1) playbook-only fields such as `pool_fence_self_locking_or_safety_cover` were dropped by the normalizer as "unknown field", so a producer's answer never reached the engine and a fenced inground pool would be re-asked forever (the generator never produces that path; D3 extension fields are now first-class in `normalize`); (2) the final report lost its `derived` list (a derived value is already set on the second analysis pass); (3) `records.append_eval_row` shadowed its `eval_set` argument.
 
 **Limits:** offline runs use the rule-based stand-in for the three LLM edges, so they test the deterministic pipeline and saturate on the seeded sets; they say nothing about Claude. Rows are marked `offline` in `runtime_config_json`. A run with the real model is one command once `ANTHROPIC_API_KEY` is set (`make eval`).
+
+## D24 - Inconclusive lookups are asked, not assumed (2026-10-03)
+
+**Decision:** In `executor.resolve_field`, a lookup that is ambiguous, unavailable or read with low confidence no longer falls back to the playbook default; the producer is asked (when the field is producer-answerable, which every lookup field is). Only a definitive "nothing seen" takes the assume-no default (JUDGEMENT_CALLS L-4). The assumption record no longer carries `low_confidence`; the inconclusive lookup is kept in the evidence log (`inconclusive: true`).
+
+**Why:** the first fixed-set eval run (system `f937702`, 53 leads) had two **unsafe quotes**: `pool-ambiguous-imagery` and `pool-listing-service-down` both auto-quoted a real above-ground / unfenced pool as "no pool". Wrong assumptions that hide a hazard are the costliest error this system can make; an extra question is cheap.
+
+**Measured effect (offline stand-in, fixed set):** unsafe quotes 2 -> 0, decision accuracy 0.95 -> 1.00; emails per lead 0.44 -> 0.53 (the two leads now need a reply round). Seeded sets unchanged (their pool leads never hit an inconclusive lookup). Comparison: `uv run python -m evals.compare <baseline_run_id> <new_run_id>`.

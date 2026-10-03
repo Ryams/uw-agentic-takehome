@@ -79,3 +79,19 @@ def test_runner_writes_version_stamped_slice_rows_and_clears_state_between_sets(
     assert any(r["slice"].startswith("protocol=") for r in rows) and any(r["slice"].startswith("boundary=") for r in rows)
     assert json.loads(overall["fixed"]["runtime_config_json"])["offline"] is True    # offline runs are identifiable
     assert "Coverage" in capsys.readouterr().out
+
+
+def test_regression_gate_fixed_set_has_no_wrong_quotes_or_decisions():
+    """The offline stand-in must get every fixed case right (state, decision, conditions). Includes the cases that
+    caught D24: ambiguous imagery / a down listing service must be asked, not assumed 'no pool'."""
+    cases = setdefs.load_fixed()
+    recs, _tags, stale, _rid, _cfg, _ctx = runner.run_set("fixed", cases, runner.make_llm("offline"), 0, "fixed")
+    assert stale == []
+    bad = [(r["lead_id"], r["final_state"], r["final_decision"]) for r in recs
+           if r["unsafe_quote"] or r["decision_correct"] == 0 or not r["state_correct"] or r["internal_error"]]
+    assert bad == []
+    by = {r["lead_id"]: r for r in recs}
+    for cid in ("pool-ambiguous-imagery", "pool-listing-service-down"):
+        assert by[f"FIX-{cid}"]["emails_sent"] >= 1 and by[f"FIX-{cid}"]["assume_n"] == 0   # asked; nothing assumed
+    assert by["FIX-reply-none"]["emails_sent"] == 1 and by["FIX-reply-none"]["final_state"] == orch.AWAITING   # no nagging
+    assert by["FIX-reply-partial-then-complete"]["repeat_asks"] == 0                         # re-ask only what is missing

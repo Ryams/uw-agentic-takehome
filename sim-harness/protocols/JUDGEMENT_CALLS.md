@@ -87,3 +87,9 @@ Cross-protocol calls are under "Global".
 - **O-4 (assumed):** Assuming a value changes what is required: assuming PC 9 (PPC lookup failed) makes the four PC 9/10 conditional fields required, so the producer is asked for them.
 - **O-5 (assumed):** Default recipient for follow-ups is the lead's `owner_email` when present, else a generic producer address; routing to agent vs homeowner vs internal team is on the backlog.
 - **O-6 (assumed):** A conditional ask that is only relevant on a deeper path gets its own group with the full chain ("If Water Heater Type is Tank and Water Heater Age > 10").
+
+## Lookup outcomes (L-4, eval-driven)
+
+| id | call | status |
+|---|---|---|
+| L-4 | The pools sticky note says "if missing check google maps and zillow, if you don't see anything assume no". Only a lookup that *looked and saw nothing* (`not_found` / `nothing_seen`) takes the assume-no default. **Ambiguous imagery, a listing-service outage, or a low-confidence reading is not "seeing nothing"**: the field is asked of the producer instead of assumed. Found by the fixed eval set (`pool-ambiguous-imagery`, `pool-listing-service-down`): the old behaviour auto-quoted an above-ground pool as no pool. | assumed (D24) |

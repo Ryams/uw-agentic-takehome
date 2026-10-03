@@ -16,3 +16,15 @@ Found by running the encoded protocols over the ground truth (`clean_fields`) of
 | lookups / replies | Generator has no notion of lookup outcomes (found / not found / ambiguous) or imperfect replies (partial, wrong, off-topic). |
 
 **Mitigation (eval milestone, D17):** fixed eval sets with a known breakdown, one hand-built lead per protocol leaf and per boundary, plus seeded generator sets with a recorded archetype/outcome breakdown and a coverage report per eval run.
+
+## Status after milestone 7
+
+Closed by the fixed set (`evals/sets/fixed.json`, 43 cases): above-ground pools, fenced inground (secure / not), unfenced + gated, diving-board overlay, P(F) .15/.16/.50/.51 for roof and siding, Class B and the 20/21-year composition-roof boundary, water-heater age 10/11 and the DECLINE leaf, plumbing 30/31 and DECLINE, trust name given / missing / not a trust, near-miss (no false conflict), lookup not-found / ambiguous / service-down, vendor CRM-down / geo-no-record, partial reply, no reply.
+
+Still open (documented, not covered):
+- `UW_REVIEW` (`on_unexpected`) leaves: unreachable with registry-valid data; engine unit tests cover them.
+- Wrong-value, free-text and off-topic producer replies: the reply simulator only produces complete / partial / none. The LLM reply-parser's free-text path is covered by unit tests with a scripted model, not by the eval.
+- Noisy vendor profile (`VENDOR_PROFILE=noisy`) is not an eval set yet.
+- Real-model behaviour: every number above is from the rule-based offline stand-in. Claude may behave differently on interpretation, email wording and summaries; a keyed run (`make eval`) is the first thing to do when a key is available.
+- Email quality (wording, tone, clarity) is not graded; only structure (what was asked, how many emails). An LLM-judged rubric is on the backlog.
+- Multi-turn behaviour beyond three rounds, and several producers replying out of order.

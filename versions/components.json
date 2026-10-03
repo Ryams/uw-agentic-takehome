@@ -172,13 +172,13 @@
     "version": 0
   },
   "resolver": {
-    "content_hash": "eac08e90ead0",
+    "content_hash": "52998b6d0dca",
     "files": [
       "sim-harness/shared/field_resolution.json",
       "uw_agent/executor.py",
       "uw_agent/resolution.py"
     ],
-    "version": 3
+    "version": 4
   },
   "summarizer": {
     "content_hash": "434306a18390",

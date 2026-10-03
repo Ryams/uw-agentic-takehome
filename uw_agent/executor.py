@@ -31,6 +31,11 @@ class FieldResolution:
     waiting_on: list[str] = field(default_factory=list)
 
 
+def _producer_can_answer(name: str) -> bool:
+    meta = registry.fields().get(name)
+    return meta["editableByProducer"] if meta else True      # playbook-only fields are asked of the producer (D3)
+
+
 def resolve_field(name: str, values: dict[str, Any], ctx_values: dict[str, Any], lead_id: str, tools: ToolKit,
                   llm: StructuredLLM) -> FieldResolution:
     scope = {**values, **ctx_values}
@@ -55,11 +60,15 @@ def resolve_field(name: str, values: dict[str, Any], ctx_values: dict[str, Any],
             if iv.status == "value" and iv.confidence != "low":
                 out.outcome, out.value = "resolved", iv.value
                 return out
-            low = iv.status in ("unclear", "unavailable") or (iv.status == "value")   # low-confidence reading
+            if iv.status != "nothing_seen" and _producer_can_answer(name):
+                # ambiguous imagery, a service outage or a low-confidence reading is not "you don't see anything":
+                # the playbook's assume-no default does not apply, so ask the producer (D24)
+                out.log[-1]["inconclusive"] = True
+                out.outcome = "ask_producer"
+                return out
             out.outcome, out.value = "assumed", s["default"]
             out.assumption = {"field": name, "value": s["default"], "why": s.get("rationale", "playbook default"),
-                              "basis": "low-confidence reading" if iv.status == "value" else iv.status,
-                              "low_confidence": low, "evidence": lr.evidence}
+                              "basis": "nothing seen", "low_confidence": False, "evidence": lr.evidence}
             return out
         elif a == "assume":
             w = s.get("when")

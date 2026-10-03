@@ -191,7 +191,7 @@ def print_report(eval_run_id: str, sv: dict[str, Any], per_set: dict[str, dict[s
     bad = [f for f in failures]
     print(f"\nFailing leads ({len(bad)}):")
     for f in bad[:25]:
-        print(f"  {f['set']:<12}{f['lead_id']:<22}expected {f['expected_state']}/{f['expected_decision']}  "
+        print(f"  {f['set']:<12} {f['lead_id']:<34}expected {f['expected_state']}/{f['expected_decision']}  "
               f"got {f['final_state']}/{f['final_decision']}  {'UNSAFE-QUOTE ' if f['unsafe_quote'] else ''}")
 
 
