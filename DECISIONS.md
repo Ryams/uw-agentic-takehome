@@ -51,3 +51,16 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 **Constraint:** The clean data is eval/grader-only. It must stay behind the existing `DEBUG=true` gate and must never be visible to the agent workflow; only the reply simulator and eval harness may read it.
 
 **How to apply:** Keep the diff minimal and note it in the README ("Changes to provided tooling") for the review.
+
+## D6 - Protocols are pure; English labels mapped at encoding time; resolution is a separate field-level map (2026-10-03)
+
+**Decision:**
+- Diagram node labels (English) are mapped to canonical registry fields **once, at encoding time** (LLM + human review), not at run time. Each node keeps the original `question` plus an explicit `check` and an `on_unexpected` branch.
+- Protocol JSON is a **pure function over resolved values**: no fetch/lookup/ask/LLM hints inside nodes. The runtime walker is deterministic.
+- How a value is obtained or validated (fetch, lookup with default, ask producer, defer to bind, derive, conflict/plausibility) lives in a separate **field-resolution map** (`shared/field_resolution.json`), keyed by field, since one field can feed many protocols. Diagram callouts like "check Maps/Zillow, else assume no" go there.
+- A **protocol linter** checks every protocol against the registry and the resolution map.
+- Pipeline order: normalize -> resolve values -> walk protocols -> decide/compose. LLM use at runtime is limited to interpreting lookup evidence / fuzzy values (resolution step) and writing emails.
+
+**Why:** Auditable, evaluable (a wrong outcome is a wrong value or a wrong tree, never ambiguous which), and avoids repeating/contradicting resolution logic per node.
+
+**How to apply:** Use the `encode-protocol` skill (`.claude/skills/encode-protocol/SKILL.md`). `swimming_pools.json` predates this and needs re-encoding to the new shape (explicit `check`/`on_unexpected`, callout moved to the resolution map).
