@@ -22,7 +22,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [core] Standard result shape: outcome, conditions, blocking fields, evidence trail
 - [next] When choosing the next protocols: check for cross-protocol dependencies (one protocol's computed value or outcome feeding another, e.g. fire simulation -> roof); if found, add `depends_on`/`produces` to the manifest and run protocols in dependency order
 - [hit list] Conditions tracker: quote conditions carry deadlines and fallbacks ("within 60 days or decline", "within first term"); track and enforce post-quote
-- [core] Eval hardening (D17): fixed eval sets under `evals/sets/` (hand-built leads for every protocol outcome/boundary in `evals/COVERAGE_GAPS.md`, lookup and imperfect-reply scenarios) + seeded sets with recorded breakdown + per-run coverage table
+- [done] Eval hardening (D17): fixed eval sets under `evals/sets/` (hand-built leads for every protocol outcome/boundary in `evals/COVERAGE_GAPS.md`, lookup and imperfect-reply scenarios) + seeded sets with recorded breakdown + per-run coverage table
 - [hit list] Remaining ~6 protocols, UW-editable protocol authoring
 
 ## Tools / integrations (mostly stubbed)
@@ -56,10 +56,11 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [hit list] Batch actions, auth/roles, notifications
 
 ## Evals
-- [core] Grader using answer key + clean data: path correct, blockers identified
-- [core] Follow-up quality: minimal (no over-asking, no missed blockers), bind-only not chased, no unnecessary escalation
-- [core] Multi-seed runner with summary report and diffs between runs; metrics overall and per slice (protocol, outcome, failure mode, archetype, tier; D18)
-- [next] LLM-judged email quality rubric
+- [done] Grader using answer key + clean data: path correct, blockers identified
+- [done] Follow-up quality: minimal (no over-asking, no missed blockers), bind-only not chased, no unnecessary escalation
+- [done] Multi-seed runner with summary report and diffs between runs; metrics overall and per slice (protocol, outcome, failure mode, archetype, tier; D18)
+- [next] LLM-judged email quality rubric (not built: email structure is graded, wording is not)
+- [next] Eval: wrong-value / free-text / off-topic replies, noisy-vendor profile set, keyed (Claude) baseline run
 - [next] End-to-end metrics: replies needed to close, time-to-resolution
 - [hit list] Feed UW overrides back into the eval set
 

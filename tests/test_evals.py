@@ -95,3 +95,24 @@ def test_regression_gate_fixed_set_has_no_wrong_quotes_or_decisions():
         assert by[f"FIX-{cid}"]["emails_sent"] >= 1 and by[f"FIX-{cid}"]["assume_n"] == 0   # asked; nothing assumed
     assert by["FIX-reply-none"]["emails_sent"] == 1 and by["FIX-reply-none"]["final_state"] == orch.AWAITING   # no nagging
     assert by["FIX-reply-partial-then-complete"]["repeat_asks"] == 0                         # re-ask only what is missing
+
+
+def test_compare_reports_component_changes_and_only_changed_metrics(tmp_path):
+    from evals import compare
+    out = tmp_path / "r.csv"
+    for _ in range(2):
+        runner.main(["--sets", "fixed", "--llm", "offline", "--csv", str(out)])
+    ids = list(dict.fromkeys(r["eval_run_id"] for r in csv.DictReader(out.open())))
+    assert len(ids) == 2
+    text = compare.compare(ids[0], ids[1], out)
+    assert "Component changes:" in text and "(none)" in text                 # same code, same results
+    assert "Slice overall" not in text                                        # identical runs: nothing to report
+    rows = list(csv.DictReader(out.open()))                                    # now fake a regression in run B
+    for r in rows:
+        if r["eval_run_id"] == ids[1] and r["eval_set"] == "ALL" and r["slice"] == "overall":
+            r["unsafe_quote_rate"] = "0.1"
+    with out.open("w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0]))
+        w.writeheader()
+        w.writerows(rows)
+    assert "unsafe_quote_rate: 0.000 -> 0.100 (+0.100)" in compare.compare(ids[0], ids[1], out)

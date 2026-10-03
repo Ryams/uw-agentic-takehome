@@ -9,7 +9,7 @@
 > - [x] 4. LLM edges (done offline-tested; live smoke test pending API key; D20)
 > - [x] 5. Orchestrator + state + reply loop (done; D21)
 > - [x] 6. API + web UI (done; D22; not visually verified in a browser yet)
-> - [ ] 7. Evals
+> - [x] 7. Evals (done; D23/D24; offline stand-in only, a keyed run is pending; `make eval`, `evals/compare.py`)
 > - [ ] 8. Docs
 
 # Implementation Plan: UW Agentic Assistant POC

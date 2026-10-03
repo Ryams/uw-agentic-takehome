@@ -26,18 +26,24 @@ def compare(a: str, b: str, path: Path = RESULTS_CSV) -> str:
     out += ["Component changes:"] + (changed or ["  (none)"])
     metric_cols = [c for c in ra[0] if c not in BASE_COLUMNS + TAIL_COLUMNS]
 
-    def mean(rows, col):
-        vals = [float(r[col]) for r in rows if r.get(col, "") != ""]
-        return sum(vals) / len(vals) if vals else None
+    def mean(rows, col):  # weighted by slice size so a big seed counts more than a small one
+        pairs = [(float(r[col]), int(r["n_leads"])) for r in rows if r.get(col, "") != ""]
+        w = sum(n for _, n in pairs)
+        return sum(v * n for v, n in pairs) / w if w else None
+    # compare the pooled (eval_set=ALL) rows so every slice has one row per run
+    ra, rb = [r for r in ra if r["eval_set"] == "ALL"] or ra, [r for r in rb if r["eval_set"] == "ALL"] or rb
     slices = sorted({r["slice"] for r in ra} & {r["slice"] for r in rb}, key=lambda x: (x != "overall", x))
     for sl in slices:  # per-slice deltas (mean over seeds/sets); n shows slice size so small slices are visible
         sa, sb = [r for r in ra if r["slice"] == sl], [r for r in rb if r["slice"] == sl]
         na, nb = sum(int(r["n_leads"]) for r in sa), sum(int(r["n_leads"]) for r in sb)
+        lines_before = len(out)
         out += ["", f"Slice {sl}  (n={na} -> {nb}):"]
         for col in metric_cols:
             ma, mb = mean(sa, col), mean(sb, col)
-            if ma is not None and mb is not None:
+            if ma is not None and mb is not None and abs(mb - ma) > 1e-9:   # only what changed
                 out.append(f"  {col}: {ma:.3f} -> {mb:.3f} ({mb - ma:+.3f})")
+        if len(out) == lines_before + 2:
+            del out[lines_before:]                       # nothing changed in this slice
     return "\n".join(out)
 
 
