@@ -82,9 +82,30 @@ def gap_for(name: str, values: dict[str, Any], reason: str) -> Gap:
     return Gap(name, reason, steps, waiting)
 
 
-def derive_value(step: dict[str, Any], values: dict[str, Any]) -> Optional[Any]:
-    src = values.get(step["from"])
-    return None if src is None else step["table"].get(src)
+def derive_value(step: dict[str, Any], values: dict[str, Any], ctx: Optional[dict[str, Any]] = None) -> dict[str, Any]:
+    """Evaluate a `derive` step. Returns one of
+      {"status": "value", "value": v, "why": str}   derived
+      {"status": "pending", "waiting_on": [fields]} a needed input is still missing
+      {"status": "none"}                            inputs known but no rule/table entry applies
+
+    Two forms: `table` (+ single `from` field) and ordered `rules` [{when, value, why}] evaluated
+    with the expression language (first non-False rule decides; UNKNOWN -> pending).
+    """
+    scope = {**values, **(ctx or {})}
+    if "rules" in step:
+        for rule in step["rules"]:
+            e = parse(rule["when"])
+            v = e.evaluate(scope)
+            if v is True:
+                return {"status": "value", "value": rule["value"], "why": rule.get("why", rule["when"])}
+            if v is UNKNOWN:
+                return {"status": "pending", "waiting_on": sorted(e.unknown_fields(scope))}
+        return {"status": "none"}
+    src = step["from"] if isinstance(step["from"], str) else step["from"][0]
+    if values.get(src) is None:
+        return {"status": "pending", "waiting_on": [src]}
+    v = step["table"].get(values[src])
+    return {"status": "value", "value": v, "why": f"{src} = {values[src]}"} if v is not None else {"status": "none"}
 
 
 def analyze(values: dict[str, Any], context: Optional[dict[str, Any]] = None) -> Analysis:
@@ -93,14 +114,19 @@ def analyze(values: dict[str, Any], context: Optional[dict[str, Any]] = None) ->
     vals = dict(values)
     a = Analysis(values=vals)
 
-    # 1) derivations (pure table lookups)
-    for name, src in registry.derived_map().items():
-        if vals.get(name) is None and vals.get(src) is not None:
-            step = next(s for s in load_map()["fields"][name]["on_missing"] if s["action"] == "derive")
-            v = derive_value(step, vals)
-            if v is not None:
-                vals[name] = v
-                a.derived.append({"field": name, "from": src, "value": v})
+    # 1) derivations (tables or playbook rules); a derived value is an ASSUMPTION worth showing
+    derive_pending: dict[str, list[str]] = {}
+    for name, entry in load_map()["fields"].items():
+        step = next((s for s in entry["on_missing"] if s["action"] == "derive"), None)
+        if step is None or vals.get(name) is not None:
+            continue
+        r = derive_value(step, vals, ctx)
+        if r["status"] == "value":
+            vals[name] = r["value"]
+            a.derived.append({"field": name, "value": r["value"], "why": r["why"],
+                              "from": step["from"] if isinstance(step["from"], str) else step["from"]})
+        elif r["status"] == "pending":
+            derive_pending[name] = r["waiting_on"]
 
     # 2) gaps / pending / deferred
     for name in registry.field_names():
@@ -126,10 +152,9 @@ def analyze(values: dict[str, Any], context: Optional[dict[str, Any]] = None) ->
                 reason = f"required when {meta['requiredWhen']}"
             else:
                 reason = "required: conditional"
-        src = registry.derived_from(name)
-        if src and vals.get(src) is None:
-            # can't derive until the source is known; the source is its own gap
-            a.pending.append({"field": name, "waiting_on": [src]})
+        if name in derive_pending:
+            # can't derive until its inputs are known; those inputs are their own gaps
+            a.pending.append({"field": name, "waiting_on": derive_pending[name]})
             continue
         a.gaps.append(gap_for(name, vals, reason))
 
@@ -167,11 +192,27 @@ def validate_map() -> list[str]:
                 if n in names and not registry.validate_value(n, val):
                     errs.append(f"{n}: {s['action']} value {val!r} invalid for field type")
             if s["action"] == "derive":
-                src = s["from"]
                 opts = registry.select_options(n) or []
-                for k, v in s["table"].items():
-                    if k not in (registry.select_options(src) or []) or v not in opts:
-                        errs.append(f"{n}: derive table entry {k!r}->{v!r} invalid")
+                if "rules" in s:
+                    for r in s["rules"]:
+                        try:
+                            e = parse(r["when"])
+                            for f in e.fields():
+                                if f not in names and f not in m.get("context_values", {}):
+                                    errs.append(f"{n}: derive rule uses unknown field {f}")
+                            for fld, _, lit in e.literals():
+                                if fld in names and registry.meta(fld)["type"]["kind"] == "select" \
+                                        and str(lit) not in [str(o) for o in registry.select_options(fld)]:
+                                    errs.append(f"{n}: derive rule compares {fld} with {lit!r}, not an option")
+                        except Exception as ex:  # noqa: BLE001
+                            errs.append(f"{n}: bad derive rule: {ex}")
+                        if r["value"] not in opts:
+                            errs.append(f"{n}: derive rule value {r['value']!r} not an option")
+                else:
+                    src = s["from"]
+                    for k, v in s["table"].items():
+                        if k not in (registry.select_options(src) or []) or v not in opts:
+                            errs.append(f"{n}: derive table entry {k!r}->{v!r} invalid")
         if n not in names and not (entry.get("label") and entry.get("type")):
             errs.append(f"{n}: non-registry field needs label and type")
     for r in m.get("conflicts", []):

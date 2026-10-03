@@ -535,21 +535,35 @@
       "on_missing": [
         {
           "action": "derive",
-          "from": "roof_material",
-          "table": {
-            "Architecture Shingles": "Class A",
-            "Asphalt Fiberglass Composite": "Class A",
-            "Clay Tile": "Class A",
-            "Concrete Tile": "Class A",
-            "Metal Shingles / Sheets": "Class A",
-            "Slate": "Class A",
-            "Standing Seam Metal": "Class A",
-            "Wood Shake": "Class C",
-            "Wood Shingle": "Class C",
-            "Other": "Class B"
-          }
+          "from": [
+            "roof_material",
+            "roof_replacement_year"
+          ],
+          "rules": [
+            {
+              "when": "roof_material in (\"Clay Tile\", \"Concrete Tile\", \"Slate\", \"Metal Shingles / Sheets\", \"Standing Seam Metal\")",
+              "value": "Class A",
+              "why": "noncombustible or metal roofing (assume Class A)"
+            },
+            {
+              "when": "roof_material in (\"Architecture Shingles\", \"Asphalt Fiberglass Composite\") and roof_replacement_year >= current_year - 20",
+              "value": "Class A",
+              "why": "composition shingles installed or replaced within the past 20 years (assume Class A)"
+            },
+            {
+              "when": "roof_material in (\"Wood Shake\", \"Wood Shingle\")",
+              "value": "Class C",
+              "why": "combustible roofing (untreated wood shake or shingle)"
+            },
+            {
+              "when": "true",
+              "value": "Class B",
+              "why": "other / older composition roofing: not assumable as Class A, treated as Non-Class A"
+            }
+          ]
         }
-      ]
+      ],
+      "source": "Roof Class diagram, 'Unknown Class' branch: assume Class A for noncombustible/metal/recent composition roofs; combustible roofs are not assumed (RC-1)"
     },
     "p_f": {
       "on_missing": [

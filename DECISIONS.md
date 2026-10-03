@@ -128,3 +128,18 @@ Applied to: `pool_fence_self_locking_or_safety_cover` in `swimming_pools.json`.
 - Evals count a conditional ask as correct when its condition matches the true value; it is not "over-asking" (it is the mechanism that avoids a second email).
 
 **Why:** The spec asks for a single follow-up message containing everything missing, not a drip of rounds. Previously asks for fields behind an unanswered question surfaced only after the reply.
+
+## D14 - Playbook supersedes the registry's generic rules (2026-10-03)
+
+**Decision:** The **registry** (`shared/field_registry.json`) is the generic data dictionary: required levels, `editableByProducer`, `requiredWhen`, and a generic triage rule (missing + producer-editable + required -> email). The **playbook** is the underwriters' decision flows (the FigJam diagrams we encode). When a playbook instruction is specific to a field/situation and conflicts with the registry's generic instruction, the playbook wins. First applied to the pools callout ("check Google Maps and Zillow, else assume no"), which overrides "ask the producer" for the five pool fields (R-1). The registry itself defers to the FigJam for `missingDefault` values.
+
+## D15 - Capture sticky notes and callouts as additional info in protocol JSON (2026-10-03)
+
+**Decision:** Every sticky note, callout, and explanatory bullet box in a diagram is stored verbatim in the protocol's `sticky_notes: [{text, applies_to, handled_in?}]` (and, where tied to an outcome, e.g. acceptable evidence, on that outcome). Where a note became a machine rule (resolution map, derive rules) `handled_in` points to it. *Why:* an LLM that reasons about missing/ambiguous values (evidence interpretation, composer, reviewer) can read the original playbook text, not only our encoding. Linter checks the structure; the `encode-protocol` skill requires it. Retrofitted on pools; first used on roof_class.
+
+## D16 - Derived values: rules + arithmetic; "Unknown" branches become derivations (2026-10-03)
+
+**Decision:**
+- The expression language gained `+` / `-` on numeric operands (e.g. `roof_replacement_year >= current_year - 20`).
+- `derive` steps in the resolution map can use ordered `rules [{when, value, why}]` over any fields (first non-False rule decides; UNKNOWN -> the field is **pending** on the missing inputs, which become their own gaps), in addition to the single-field `table` form. Derived values are returned in `Analysis.derived` with their `why`, so the UI/email can show them as explained assumptions.
+- A diagram branch such as Roof Class's "Unknown Class" (class not provided -> assume from material) is modelled as the derivation of the underlying field, not as a protocol branch, when it is equivalent to the known-value branches (RC-1). Protocols stay pure and branch only on resolved values.

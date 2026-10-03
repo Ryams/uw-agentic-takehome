@@ -156,5 +156,18 @@
       "outcome": "LOL_ENDORSEMENT",
       "note": "Pools with slides or diving boards are acceptable with a Limitation of Liability endorsement; applied on top of the tree result (SP-2)."
     }
+  ],
+  "sticky_notes": [
+    {
+      "text": "If Missing Check google maps and zillow if you dont see anything assume no",
+      "applies_to": [
+        "pool_type",
+        "pool_security",
+        "pool_has_diving_board_or_slide",
+        "above_ground_pool_ladder",
+        "is_gated_community"
+      ],
+      "handled_in": "shared/field_resolution.json (lookup steps, R-1)"
+    }
   ]
 }

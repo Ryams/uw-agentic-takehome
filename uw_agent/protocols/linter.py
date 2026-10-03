@@ -79,6 +79,9 @@ def lint_protocol(data: dict[str, Any], resolution: Optional[dict[str, Any]] = N
         return [f"{name}: needs `tree` or `components`"], warns
 
     outcomes = data["outcomes"]
+    for i, note in enumerate(data.get("sticky_notes", [])):
+        if not isinstance(note, dict) or not str(note.get("text", "")).strip():
+            errs.append(f"{name}: sticky_notes[{i}] needs non-empty text")
     for oid, o in outcomes.items():
         if o.get("decision") not in DECISIONS:
             errs.append(f"{name}: outcome {oid} has bad decision {o.get('decision')!r}")

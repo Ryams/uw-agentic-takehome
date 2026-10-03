@@ -1,0 +1,81 @@
+{
+  "protocol": "siding",
+  "source_image": "img/siding.png",
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (SD)",
+  "applies_when": "always",
+  "stage": "quote",
+  "sticky_notes": [],
+  "outcomes": {
+    "NO_ACTION": {
+      "decision": "quote"
+    },
+    "CONFIRM_CLASS_A_SIDING_FIRST_TERM": {
+      "decision": "quote_with_conditions",
+      "condition": "require confirmation of Class A siding, or replacement, within first term"
+    },
+    "CONFIRM_CLASS_A_SIDING_UW_PERIOD": {
+      "decision": "quote_with_conditions",
+      "condition": "require confirmation of Class A siding, or replacement, within underwriting period"
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "siding_class",
+    "question": "Siding: non-combustible or wood shake/shingle?",
+    "fields": [
+      "siding_classification"
+    ],
+    "branches": [
+      {
+        "label": "Non-combustible",
+        "when": "siding_classification in (\"A\", \"B\", \"C\")",
+        "then": {
+          "outcome": "NO_ACTION"
+        }
+      },
+      {
+        "label": "Wood Shake or Shingle",
+        "when": "siding_classification == \"D\"",
+        "then": {
+          "id": "siding_pf",
+          "question": "P(F) with wood shake/shingle siding?",
+          "fields": [
+            "p_f"
+          ],
+          "branches": [
+            {
+              "label": "P(F) <= .15",
+              "when": "p_f <= 0.15",
+              "then": {
+                "outcome": "NO_ACTION"
+              }
+            },
+            {
+              "label": "P(F) > .15 <= .50",
+              "when": "p_f > 0.15 and p_f <= 0.5",
+              "then": {
+                "outcome": "CONFIRM_CLASS_A_SIDING_FIRST_TERM"
+              }
+            },
+            {
+              "label": "P(F) > .50",
+              "when": "p_f > 0.5",
+              "then": {
+                "outcome": "CONFIRM_CLASS_A_SIDING_UW_PERIOD"
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
+          }
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  }
+}

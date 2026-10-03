@@ -62,12 +62,26 @@
     ],
     "version": 0
   },
+  "protocol:roof_class": {
+    "content_hash": "1aeadfca2a78",
+    "files": [
+      "sim-harness/protocols/roof_class.json"
+    ],
+    "version": 0
+  },
+  "protocol:siding": {
+    "content_hash": "cb1d7392c767",
+    "files": [
+      "sim-harness/protocols/siding.json"
+    ],
+    "version": 0
+  },
   "protocol:swimming_pools": {
-    "content_hash": "404bc6ec2ecf",
+    "content_hash": "6a8240db615b",
     "files": [
       "sim-harness/protocols/swimming_pools.json"
     ],
-    "version": 1
+    "version": 2
   },
   "protocol:trusts_and_llcs_post_bind": {
     "content_hash": "7293e79d2a10",
@@ -91,27 +105,27 @@
     "version": 0
   },
   "protocol_engine": {
-    "content_hash": "c6d94e2ea57c",
+    "content_hash": "844a27fc3b5a",
     "files": [
       "uw_agent/protocols/engine.py",
       "uw_agent/protocols/expr.py"
     ],
-    "version": 2
+    "version": 3
   },
   "protocol_manifest": {
-    "content_hash": "a93d4d9b4ee8",
+    "content_hash": "fd1459d6ca7f",
     "files": [
       "sim-harness/protocols/manifest.json"
     ],
-    "version": 1
+    "version": 2
   },
   "resolver": {
-    "content_hash": "70ced91df132",
+    "content_hash": "88e5ac11f10e",
     "files": [
       "sim-harness/shared/field_resolution.json",
       "uw_agent/resolution.py"
     ],
-    "version": 1
+    "version": 2
   },
   "summarizer": {
     "content_hash": "empty",

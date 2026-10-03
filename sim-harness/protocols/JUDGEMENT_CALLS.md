@@ -54,3 +54,23 @@ Cross-protocol calls are under "Global".
 - **R-5 (assumed):** "Unknown" is treated as missing for every field, including fields where it is a registered option (road_access, vegetation_clearance, fire_department_type, fire_dept_response_time).
 - **R-6 (assumed):** Knob-and-tube: assume present if `year_built < 1950` (registry missingDefault), otherwise ask the producer.
 - **R-7 (assumed):** Cross-field conflict rules: unoccupied 3+ months but Primary; short-term rental but Primary; owner-occupied type but Secondary use; zero residents on an owner-occupied dwelling; roof year in the future (year taken from the lead's received_at); service under 60 amps; zero acreage. Derived from the failure modes the generator injects; thresholds are ours.
+
+## roof_class (RC)
+- **RC-1 (assumed):** The diagram's "Unknown Class" branch is modelled as a derivation of `roof_classification` when it is not provided, not as a third protocol branch. *Why:* it is equivalent: Unknown + (noncombustible / metal / composition shingles installed within 20 years) = "Assume Class A, Okay to Quote" = Class A; Unknown + combustible material has exactly the Non-Class A outcomes at every P(F) range (<= .15 OK; .15-.50 confirm within first term; > .50 confirm within 60 days or decline). Keeping the protocol pure (D6) and putting the "assume" logic in `field_resolution.json` also means the dashboard shows it as an explained assumption ("assumed Class A: noncombustible roofing"). Derivation rules: Clay/Concrete Tile, Slate, Metal Shingles/Sheets, Standing Seam Metal -> Class A; Architecture Shingles / Asphalt Fiberglass Composite replaced within 20 years -> Class A; Wood Shake/Shingle -> Class C; anything else -> Class B (Non-Class A). Replaces R-3 for roofs.
+- **RC-2 (assumed):** The Non-Class A band is drawn "> .15 < .50" and "> .50", leaving exactly .50 undefined. Encoded as `> .15 and <= .50` (matches the Unknown-class band), `> .50`.
+- **RC-3 (assumed):** Composition shingles older than 20 years are not covered by either list in the diagram; treated as not assumable, i.e. Class B / Non-Class A (conservative). "Other" material (flat membrane, tar & gravel, unknown) also -> Class B.
+- **RC-4 (assumed):** "Within the past 20 years" is inclusive (`roof_replacement_year >= current_year - 20`); `current_year` comes from the lead's received_at.
+- **RC-5 (assumed):** "Require confirmation of Class A or replacement within first 60 days **or Decline**" is a `quote_with_conditions` outcome whose condition says "otherwise decline"; it is not an immediate decline, and not an underwriter-discretion fork. Enforcing the deadline is out of scope (conditions tracker is on the hit list).
+- **RC-6 (assumed):** "Acceptable evidence" (roofing permits, contractor invoices, manufacturer documentation, inspection findings, other) is captured as a sticky note and as `acceptable_evidence` on the two confirmation outcomes, so the dashboard/composer can cite it.
+- **RC-7 (assumed):** "Non-Class A" = registry values Class B or Class C.
+- **RC-8 (assumed):** The Non-Class A confirmation boxes lack the evidence list that the Unknown-class boxes show; the same list is attached to both (same outcome text).
+
+## siding (SD)
+- **SD-1 (assumed):** Branch on the registry's `siding_classification` (A-D, derived from material): A/B/C = "Non-combustible", D = "Wood Shake or Shingle" (class D covers `Wood Shake / Shingle` and plain `Wood`). The diagram names materials, not classes; Vinyl and Aluminum/Steel/Other (class C) are therefore treated as non-combustible. Alternative: branch on `siding_material` directly and send Vinyl/Wood/Other to UW review.
+- **SD-2 (assumed):** The siding_classification derivation table is still borrowed from the generator's consistency tables (R-3 now covers siding only; the diagram does not define classes).
+- **SD-3 (assumed):** "Class A" in "Require confirmation of Class A or replacement" means Class A siding.
+- **SD-4 (assumed):** "UWing period" = underwriting period; the P(F) > .50 outcome is the stricter (earlier) deadline vs "first term".
+- **SD-5 (assumed):** Siding P(F) band edges: `<= .15`, `> .15 and <= .50`, `> .50` (exactly as drawn).
+
+## Global additions
+- **G-10 (assumed):** Sticky notes and callouts are captured verbatim in the protocol's `sticky_notes` (with `applies_to` and, where they became machine rules, `handled_in`), so an LLM reasoning over a missing/ambiguous value can read the playbook text (D15).

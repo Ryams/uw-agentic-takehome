@@ -31,6 +31,10 @@ Input: `sim-harness/protocols/img/<topic>.png`. Output: `sim-harness/protocols/<
 12. **Manifest:** every protocol file has an entry in `sim-harness/protocols/manifest.json`: `protocol`, `file`, `stage` (`quote`|`post_bind`), `enabled`, `order` (cheap deterministic protocols first; ones needing lookups/producer asks later; used for short-circuiting and display), `tags`, and `origin`. The engine runs only `enabled && stage == "quote"`. Add/update the entry whenever you create, split, or re-encode a protocol.
 13. **Splits keep provenance:** when a diagram is split into several protocols (independent root branches, or quote vs post-bind stages), EVERY piece's manifest `origin` records `source_image`, `diagram` (group id), `split_from` (the original diagram/protocol name) and `split_note` (why/how it was split). Also put `split_from` in the protocol file. Never split without recording this, so later encoding updates can find all sibling pieces (grep the manifest for the same `diagram`).
 
+14. **Sticky notes (D15):** capture every sticky note, callout and explanatory bullet box verbatim in the protocol's `sticky_notes: [{text, applies_to, handled_in?}]` (also attach lists like "acceptable evidence" to the outcome they belong to). Where a note became a machine rule, set `handled_in` to the resolution-map entry. Never summarize them away.
+15. **"Unknown" branches (D16):** if a diagram has a branch for an unknown/not-provided value that says to assume something from other data, check whether it is equivalent to the known-value branches; if so, encode it as `derive` rules in the resolution map (document in JUDGEMENT_CALLS.md) instead of a protocol branch. Numeric windows ("within 20 years") use expression arithmetic (`current_year - 20`).
+16. **Precedence (D14):** the playbook beats the registry's generic rules; record any such override in JUDGEMENT_CALLS.md.
+
 ## Process
 1. Read image -> list nodes/edges/callouts.
 1b. Check the manifest for existing protocols from the same `diagram` (a re-encode or sibling split).

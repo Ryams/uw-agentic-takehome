@@ -21,7 +21,9 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [core] Encode 3-4 protocols (pools done; pick others from Occupancy, Roof Class, Post & Pier, Electrical, Plumbing)
 - [core] Standard result shape: outcome, conditions, blocking fields, evidence trail
 - [next] When choosing the next protocols: check for cross-protocol dependencies (one protocol's computed value or outcome feeding another, e.g. fire simulation -> roof); if found, add `depends_on`/`produces` to the manifest and run protocols in dependency order
-- [hit list] Remaining ~8 protocols, UW-editable protocol authoring
+- [hit list] Conditions tracker: quote conditions carry deadlines and fallbacks ("within 60 days or decline", "within first term"); track and enforce post-quote
+- [next] Generator coverage: leadgen never produces P(F) in (.15, .50] or non-wildfire Class B/C roofs, so those roof/siding branches are untested by generated queues; consider a documented generator tweak (wildfire P(F) range) or hand-built eval leads
+- [hit list] Remaining ~6 protocols, UW-editable protocol authoring
 
 ## Tools / integrations (mostly stubbed)
 - [core] Data-fetch stubs for system-owned fields (protection class, replacement cost, roof class, etc.), reading from clean data

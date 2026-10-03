@@ -1,7 +1,8 @@
 """Tiny safe expression language for protocol `when` / `applies_when` / requiredWhen / on_conflict.
 
 Grammar:  or / and / not, comparisons (==, !=, >, >=, <, <=), `in (a, b)`, `not in`,
-parentheses, literals (numbers, "strings", true, false), identifiers (field names).
+parentheses, literals (numbers, "strings", true, false), identifiers (field names),
+and `+` / `-` between numeric operands (e.g. `roof_replacement_year >= current_year - 20`).
 Evaluation is three-valued (Kleene): a comparison involving a missing (None) field is UNKNOWN,
 and `UNKNOWN and False == False`, `UNKNOWN or True == True`.  No eval(); no attribute access.
 """
@@ -29,9 +30,9 @@ class ExprError(ValueError):
 
 
 _TOKEN = re.compile(r"""\s*(?:
-    (?P<num>-?\d+(?:\.\d+)?)|
+    (?P<num>\d+(?:\.\d+)?)|
     (?P<str>"(?:[^"\\]|\\.)*")|
-    (?P<op>==|!=|>=|<=|>|<|\(|\)|,)|
+    (?P<op>==|!=|>=|<=|>|<|\(|\)|,|\+|-)|
     (?P<id>[A-Za-z_][A-Za-z0-9_]*)
 )""", re.X)
 _KEYWORDS = {"and", "or", "not", "in", "true", "false"}
@@ -132,6 +133,19 @@ class _Parser:
             return ("not", self.not_())
         return self.cmp()
 
+    def sum_(self) -> Any:
+        n = self.term()
+        while self.peek() in (("op", "+"), ("op", "-")):
+            op = self.take()[1]
+            n = ("arith", op, n, self.term())
+        return n
+
+    def term(self) -> Any:
+        if self.peek() == ("op", "-"):
+            self.take()
+            return ("arith", "-", ("lit", 0), self.atom())
+        return self.atom()
+
     def atom(self) -> Any:
         k, v = self.take()
         if k == "lit":
@@ -146,11 +160,11 @@ class _Parser:
         raise ExprError(f"unexpected {v!r} in {self.src!r}")
 
     def cmp(self) -> Any:
-        left = self.atom()
+        left = self.sum_()
         p = self.peek()
         if p and p[0] == "op" and p[1] in ("==", "!=", ">=", "<=", ">", "<"):
             self.take()
-            return ("cmp", p[1], left, self.atom())
+            return ("cmp", p[1], left, self.sum_())
         negate = False
         if self.is_kw("not") and self.t[self.i + 1:self.i + 2] == [("kw", "in")]:
             self.take()
@@ -159,10 +173,10 @@ class _Parser:
             self.take()
             if self.take() != ("op", "("):
                 raise ExprError(f"`in` needs ( ... ) in {self.src!r}")
-            items = [self.atom()]
+            items = [self.sum_()]
             while self.peek() == ("op", ","):
                 self.take()
-                items.append(self.atom())
+                items.append(self.sum_())
             if self.take() != ("op", ")"):
                 raise ExprError(f"missing ) in {self.src!r}")
             n = ("in", left, items)
@@ -181,7 +195,7 @@ def _collect(n: Any, acc: set[str]) -> None:
         _collect(n[1], acc); _collect(n[2], acc)
     elif n[0] == "not":
         _collect(n[1], acc)
-    elif n[0] == "cmp":
+    elif n[0] in ("cmp", "arith"):
         _collect(n[2], acc); _collect(n[3], acc)
     elif n[0] == "in":
         _collect(n[1], acc)
@@ -208,7 +222,14 @@ def _val(n: Any, values: dict[str, Any]) -> Any:
     if n[0] == "id":
         v = values.get(n[1])
         return UNKNOWN if v is None else v
-    raise ExprError("only literals/identifiers can be compared")
+    if n[0] == "arith":
+        a, b = _val(n[2], values), _val(n[3], values)
+        if a is UNKNOWN or b is UNKNOWN:
+            return UNKNOWN
+        if isinstance(a, bool) or isinstance(b, bool) or not isinstance(a, (int, float)) or not isinstance(b, (int, float)):
+            return UNKNOWN
+        return a + b if n[1] == "+" else a - b
+    raise ExprError("only literals/identifiers/arithmetic can be compared")
 
 
 def _eq(a: Any, b: Any) -> bool:

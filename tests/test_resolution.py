@@ -104,3 +104,29 @@ def test_protocol_blocked_fields_all_have_resolution_entries():
     for fld in ("pool_fence_self_locking_or_safety_cover", "broker_tier", "has_primary_policy_with_stand",
                 "pool_type", "water_heater_age_years", "residence_held_in_trust"):
         assert fld in names
+
+
+def test_roof_class_derivation_rules():
+    """Playbook 'Unknown Class' logic: assume Class A for noncombustible/metal/recent composition roofs."""
+    def derive(**kw):
+        v = normalize.normalize_lead(kw).values
+        return resolution.analyze(v, resolution.context_values("2026-06-29T08:00:00Z"))
+    assert derive(roof_material="Slate").values["roof_classification"] == "Class A"
+    assert derive(roof_material="Standing Seam Metal").values["roof_classification"] == "Class A"
+    assert derive(roof_material="Asphalt Fiberglass Composite", roof_replacement_year=2010).values["roof_classification"] == "Class A"
+    assert derive(roof_material="Asphalt Fiberglass Composite", roof_replacement_year=2006).values["roof_classification"] == "Class A"  # 20 years back
+    assert derive(roof_material="Asphalt Fiberglass Composite", roof_replacement_year=2005).values["roof_classification"] == "Class B"  # older than 20
+    assert derive(roof_material="Wood Shake").values["roof_classification"] == "Class C"
+    assert derive(roof_material="Other").values["roof_classification"] == "Class B"
+    a = derive(roof_material="Architecture Shingles")                  # recent? year unknown -> wait for the year
+    assert a.values["roof_classification"] is None
+    assert {"field": "roof_classification", "waiting_on": ["roof_replacement_year"]} in a.pending
+    assert any(g.field == "roof_replacement_year" for g in a.gaps)
+    d = derive(roof_material="Slate").derived[0]
+    assert d["field"] == "roof_classification" and "noncombustible" in d["why"]   # the assumption is explained
+
+
+def test_protocol_end_to_end_on_derived_class():
+    a = resolution.analyze(normalize.normalize_lead({"roof_material": "Wood Shake", "p_f": 0.7}).values)
+    r = engine.evaluate_protocol(next(p for p in engine.load_protocols() if p.name == "roof_class"), a.values)
+    assert r.outcome == "CONFIRM_CLASS_A_60_DAYS_OR_DECLINE"

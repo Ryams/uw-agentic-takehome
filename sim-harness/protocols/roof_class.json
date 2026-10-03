@@ -1,0 +1,118 @@
+{
+  "protocol": "roof_class",
+  "source_image": "img/roof_class.png",
+  "status": "draft - judgement calls logged in JUDGEMENT_CALLS.md (RC)",
+  "applies_when": "always",
+  "stage": "quote",
+  "sticky_notes": [
+    {
+      "text": "Unknown Class, P(F) > .15: Assume Class A (Okay to Quote) for: Composition/asphalt/fiberglass shingles, installed or replaced within the past 20 years; Concrete, clay, slate, and similar noncombustible roofing materials; Modern standing seam and other metal roofing systems.",
+      "applies_to": [
+        "roof_classification"
+      ],
+      "handled_in": "shared/field_resolution.json roof_classification derive rules (RC-1)"
+    },
+    {
+      "text": "Unknown Class, P(F) > .15: Combustible roofing materials, including untreated wood shake or shingle roofs, flat membrane roofs, tar & gravel, are NOT assumed Class A: require confirmation of Class A or replacement.",
+      "applies_to": [
+        "roof_classification"
+      ],
+      "handled_in": "shared/field_resolution.json roof_classification derive rules (RC-1)"
+    },
+    {
+      "text": "Acceptable evidence can include: roofing permits; contractor invoices; manufacturer documentation; inspection findings; other documentation reasonably supporting Class A roof construction.",
+      "applies_to": [
+        "CONFIRM_CLASS_A_FIRST_TERM",
+        "CONFIRM_CLASS_A_60_DAYS_OR_DECLINE"
+      ]
+    }
+  ],
+  "outcomes": {
+    "OK_TO_QUOTE": {
+      "decision": "quote"
+    },
+    "CONFIRM_CLASS_A_FIRST_TERM": {
+      "decision": "quote_with_conditions",
+      "condition": "require confirmation of Class A roof, or replacement, within first term",
+      "acceptable_evidence": [
+        "roofing permits",
+        "contractor invoices",
+        "manufacturer documentation",
+        "inspection findings",
+        "other documentation reasonably supporting Class A roof construction"
+      ]
+    },
+    "CONFIRM_CLASS_A_60_DAYS_OR_DECLINE": {
+      "decision": "quote_with_conditions",
+      "condition": "require confirmation of Class A roof, or replacement, within first 60 days, otherwise decline",
+      "acceptable_evidence": [
+        "roofing permits",
+        "contractor invoices",
+        "manufacturer documentation",
+        "inspection findings",
+        "other documentation reasonably supporting Class A roof construction"
+      ]
+    },
+    "UW_REVIEW": {
+      "decision": "escalate",
+      "condition": "underwriter review: value not covered by protocol"
+    }
+  },
+  "tree": {
+    "id": "roof_class",
+    "question": "Roof Class: Class A or Non-Class A?",
+    "fields": [
+      "roof_classification"
+    ],
+    "branches": [
+      {
+        "label": "Class A",
+        "when": "roof_classification == \"Class A\"",
+        "then": {
+          "outcome": "OK_TO_QUOTE"
+        }
+      },
+      {
+        "label": "Non-Class A",
+        "when": "roof_classification in (\"Class B\", \"Class C\")",
+        "then": {
+          "id": "roof_pf",
+          "question": "P(F) of a Non-Class A roof?",
+          "fields": [
+            "p_f"
+          ],
+          "branches": [
+            {
+              "label": "P(F) <= .15",
+              "when": "p_f <= 0.15",
+              "then": {
+                "outcome": "OK_TO_QUOTE"
+              }
+            },
+            {
+              "label": "P(F) > .15 < .50",
+              "when": "p_f > 0.15 and p_f <= 0.5",
+              "then": {
+                "outcome": "CONFIRM_CLASS_A_FIRST_TERM"
+              }
+            },
+            {
+              "label": "P(F) > .50",
+              "when": "p_f > 0.5",
+              "then": {
+                "outcome": "CONFIRM_CLASS_A_60_DAYS_OR_DECLINE"
+              }
+            }
+          ],
+          "on_unexpected": {
+            "outcome": "UW_REVIEW"
+          }
+        }
+      }
+    ],
+    "on_unexpected": {
+      "outcome": "UW_REVIEW"
+    }
+  },
+  "notes": "The diagram's 'Unknown Class' branch is modelled as the derivation of roof_classification when it is not provided (see shared/field_resolution.json and RC-1): it is equivalent to the Class A / Non-Class A branches."
+}

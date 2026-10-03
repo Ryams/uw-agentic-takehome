@@ -118,11 +118,41 @@ def test_trusts_quote_stage_only():
     assert "trusts_and_llcs_post_bind" not in runnable and "trusts_and_llcs_quote" in runnable
 
 
+# --- roof class & siding ----------------------------------------------------------------------
+
+def test_roof_class():
+    assert run("roof_class", roof_classification="Class A").decision == "quote"            # P(F) irrelevant for Class A
+    assert run("roof_class", roof_classification="Class C", p_f=0.15).decision == "quote"
+    assert run("roof_class", roof_classification="Class C", p_f=0.3).outcome == "CONFIRM_CLASS_A_FIRST_TERM"
+    assert run("roof_class", roof_classification="Class B", p_f=0.5).outcome == "CONFIRM_CLASS_A_FIRST_TERM"  # boundary .50 (RC-2)
+    r = run("roof_class", roof_classification="Class C", p_f=0.51)
+    assert r.outcome == "CONFIRM_CLASS_A_60_DAYS_OR_DECLINE" and "60 days" in r.conditions[0]
+    assert run("roof_class", roof_classification="Class C").blocked_on == ["p_f"]
+    assert run("roof_class").blocked_on == ["roof_classification"]
+    assert cond(run("roof_class")) == {"p_f": [['roof_classification in ("Class B", "Class C")']]}
+    assert cond(run("roof_class", roof_classification="Class A")) == {}
+
+
+def test_siding():
+    assert run("siding", siding_classification="B").decision == "quote"                  # non-combustible: no action
+    assert run("siding", siding_classification="D", p_f=0.1).decision == "quote"
+    assert run("siding", siding_classification="D", p_f=0.3).outcome == "CONFIRM_CLASS_A_SIDING_FIRST_TERM"
+    assert run("siding", siding_classification="D", p_f=0.9).outcome == "CONFIRM_CLASS_A_SIDING_UW_PERIOD"
+    assert run("siding", siding_classification="D").blocked_on == ["p_f"]
+
+
+def test_sticky_notes_are_captured_verbatim():
+    notes = PROTOS["roof_class"].data["sticky_notes"]
+    assert any("Acceptable evidence" in n["text"] and "roofing permits" in n["text"] for n in notes)
+    assert PROTOS["swimming_pools"].data["sticky_notes"][0]["text"].lower().startswith("if missing check google maps")
+
+
 # --- combining ---------------------------------------------------------------------
 
 LEAD = dict(
     plumbing_age_years=20, water_heater_type="Tankless", residence_held_in_trust=False, pool_type="None",
     broker_tier="Tier 2", has_primary_policy_with_stand=False,
+    roof_classification="Class A", siding_classification="A", p_f=0.1,
 )
 
 
