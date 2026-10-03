@@ -68,12 +68,13 @@ Goal: for any run (especially evals) know exactly what code/config produced it.
 ### 5. Orchestrator + state + reply loop
 - `db.py` SQLite: `runs` (with `system_version`), `system_versions`, `leads`, `decisions` (state, evidence, path), `emails`, `uw_actions`.
 - **Clean slate at the start of every run:** `run_queue()` first calls a single `reset_world()` in `tools/world.py` that does `POST mailbox:8025/reset` (clears all emails; the mailbox persists across restarts and is keyed only by `lead_id`, so a same-seed re-run would otherwise see stale emails) and then generates the queue (`POST leadgen:8081/queue?seed=...`, which already replaces the prior queue). Single-loop demo only, so no cross-run email history is kept in the mailbox; our own SQLite keeps the durable record (emails sent/received are copied into our `emails` table, scoped by `run_id`). Reply polling and the "one email per lead" check only consider emails from the current run.
+- Blocked derived fields (engine `blocked_on` such as `roof_classification`) are expanded into their root inputs via `resolution.analyze().pending` (roof_material, roof_replacement_year) before asks are built; conditional blockers (D13) and `pending` entries merge into one conditional-ask list.
 - `orchestrator.py`: `run_queue()` -> parallel `process_lead()` (asyncio/thread pool); idempotent; states `ready_to_quote | awaiting_reply | needs_uw`; queue ordering; no duplicate emails.
 - `replysim.py`: on outbound email, answer from truth (optionally imperfect later), post inbound row to mailbox; `poll_replies()` re-triggers `process_lead()`.
 
 ### 6. API + web UI
 - `api.py` (FastAPI): `POST /runs`, `GET /leads`, `GET /leads/{id}`, `POST /leads/{id}/approve|edit|override`, `POST /replies/poll`.
-- `web/` single static page: 3 groups (Ready to quote / Awaiting reply / Needs your decision), lead card (proposed action, evidence/path, uncertainty, email preview), approve/edit/override, overrides stored as structured feedback.
+- `web/` single static page: 3 groups (Ready to quote / Awaiting reply / Needs your decision), lead card (proposed action, evidence/path, uncertainty, email preview), approve/edit/override, overrides stored as structured feedback. Quote conditions with deadlines/fallbacks ("confirm Class A within 60 days or decline") appear as "wait to quote" items on the card.
 
 ### 7. Evals
 - `evals/` runner: for seeds [42, ...], call `reset_world()` before EVERY seed (mailbox cleared, queue regenerated) so seeds can't contaminate each other, then generate queue with `DEBUG=true`, run workflow, grade against truth + answer key: correct path, correct blockers, minimal email (no over-asking/missed asks, bind-only not chased), no unnecessary escalation, optional LLM email-quality rubric. Output a table/JSON report and append to `evals/results.csv` stamped with `system_version` (see 0b); `evals/compare.py` diffs two runs.

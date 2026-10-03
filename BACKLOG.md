@@ -39,6 +39,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 
 ## Orchestration / state
 - [core] SQLite schema: leads, runs, decisions + evidence, emails, UW actions
+- [core] Expand blocked derived fields (e.g. roof_classification) into their root inputs (roof_material, roof_replacement_year) via `analyze().pending` before deciding asks
 - [core] Idempotent `process_lead()`: a reply re-triggers re-evaluation from current state
 - [core] Queue ordering: quick wins first, escalations flagged
 - [next] Follow-up cadence: no duplicate emails, nudge on no response
@@ -47,7 +48,7 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 ## Human-in-the-loop / UI
 - [core] FastAPI: start run, list leads, lead detail, approve / edit / override
 - [core] Web page with three groups: Ready to quote / Awaiting reply / Needs your decision
-- [core] Lead card: proposed action, evidence, uncertainty, email preview
+- [core] Lead card: proposed action, evidence, uncertainty, email preview; conditions with deadlines/fallbacks shown as "wait to quote" items (e.g. "confirm Class A within 60 days or decline")
 - [core] Capture UW overrides as structured feedback
 - [next] Autonomy settings (which actions are auto-sent vs held for approval)
 - [hit list] Batch actions, auth/roles, notifications
