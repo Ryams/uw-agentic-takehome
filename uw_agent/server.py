@@ -11,10 +11,15 @@ from fastapi import FastAPI
 
 from uw_agent.api import create_app
 from uw_agent.cli import build_context
+from uw_agent.replysim import simulate_replies
 from uw_agent.truth import TruthStore
 
 
 def make_app() -> FastAPI:
     ctx = build_context(offline=os.environ.get("UW_OFFLINE", "") in ("1", "true", "yes"),
                         auto_send=os.environ.get("AUTO_SEND", "1") not in ("0", "false", "no"))
-    return create_app(ctx, truth_loader=lambda ids: TruthStore.from_leadgen(ctx.settings.leadgen_url, ids))
+
+    def simulate(lead_ids: list[str], mode: str) -> int:   # demo only: producer answers from ground truth
+        return simulate_replies(ctx.mailbox, TruthStore.from_leadgen(ctx.settings.leadgen_url, lead_ids), lead_ids, mode)
+
+    return create_app(ctx, simulate=simulate)

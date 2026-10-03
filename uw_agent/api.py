@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import threading
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
@@ -17,8 +17,6 @@ from pydantic import BaseModel
 
 from uw_agent import orchestrator as orch
 from uw_agent import versioning
-from uw_agent.replysim import simulate_replies
-from uw_agent.truth import TruthStore
 
 WEB = Path(__file__).parent / "web"
 
@@ -50,8 +48,10 @@ def _effective(row: Any) -> str:
     return "actioned" if row["uw_status"] else row["state"]
 
 
-def create_app(ctx: orch.Context, truth: Optional[TruthStore] = None, background: bool = True,
-               truth_loader: Optional[Any] = None) -> FastAPI:
+def create_app(ctx: orch.Context, simulate: Optional[Callable[[list[str], str], int]] = None,
+               background: bool = True) -> FastAPI:
+    """`simulate(lead_ids, mode) -> n_replies` is the demo-only producer simulator, injected by the server so
+    this module never touches ground truth (D19)."""
     app = FastAPI(title="UW assistant", version="1.0.0")
     db = ctx.db
 
@@ -127,10 +127,9 @@ def create_app(ctx: orch.Context, truth: Optional[TruthStore] = None, background
     @app.post("/api/runs/{run_id}/simulate_replies")
     def sim(run_id: str, req: Reply) -> dict[str, Any]:
         """Demo only: the producer simulator answers every outstanding email from ground truth."""
-        t = truth or (truth_loader(db.lead_ids(run_id)) if truth_loader else None)
-        if t is None:
+        if simulate is None:
             raise HTTPException(501, "reply simulation is not configured")
-        n = simulate_replies(ctx.mailbox, t, db.lead_ids(run_id), req.mode)
+        n = simulate(db.lead_ids(run_id), req.mode)
         out = orch.poll_replies(ctx, run_id) if n else []
         return {"replies": n, "reprocessed": [o.lead_id for o in out]}
 

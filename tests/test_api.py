@@ -7,12 +7,13 @@ import uw_agent.config  # noqa: F401
 from tests.harness_fixtures import World
 from uw_agent import orchestrator as orch
 from uw_agent.api import create_app
+from uw_agent.replysim import simulate_replies
 
 
 @pytest.fixture()
 def env(tmp_path):
     w = World(tmp_path, 42, "hard")
-    app = create_app(w.ctx, truth=w.truth, background=False)
+    app = create_app(w.ctx, simulate=lambda ids, mode: simulate_replies(w.mailbox, w.truth, ids, mode), background=False)
     return w, TestClient(app)
 
 
@@ -105,7 +106,7 @@ def test_provide_value_corrects_an_assumption_and_reprocesses(env):
 
 def test_draft_email_flow_review_edit_send(tmp_path):
     w = World(tmp_path, 42, "hard", auto_send=False)
-    c = TestClient(create_app(w.ctx, truth=w.truth, background=False))
+    c = TestClient(create_app(w.ctx, simulate=lambda ids, mode: simulate_replies(w.mailbox, w.truth, ids, mode), background=False))
     rid = c.post("/api/runs", json={"seed": 42, "auto_send": False}).json()["run_id"]
     assert not w.mailbox.emails                                           # nothing went out automatically
     q = c.get(f"/api/runs/{rid}/queue").json()["leads"]
