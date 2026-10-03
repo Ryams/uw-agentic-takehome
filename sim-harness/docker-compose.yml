@@ -30,3 +30,19 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+
+  vendors:                          # mock third parties (CRM, KYC, RCE, PPC, geo risk, Maps/Zillow) - see CHANGES.md
+    build:
+      context: .
+      dockerfile: vendors/Dockerfile
+    ports: ["8082:8080"]            # 8082 = vendors API
+    environment:
+      VENDORS_DB: "/data/leadgen.db"
+      VENDOR_PROFILE: "${VENDOR_PROFILE:-demo}"   # demo | noisy
+      VENDOR_SEED: "${VENDOR_SEED:-0}"
+    volumes: ["./data:/data:ro"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5

@@ -19,3 +19,12 @@ Documented per the take-home guidance (mention during project review). Decision 
 - `clean_fields` validates against the field registry.
 - Every always-required field that was nulled has a non-null truth.
 - The clean data must only be read by the reply simulator and the eval harness, never by the agent workflow.
+
+## Mock vendors service + vendor tables (D19)
+**What:** A new `vendors` service (port 8082 in `docker-compose.yml`) simulates the third parties the agent would call: CRM, KYC, replacement-cost estimator, PPC, geo/fire-risk model, and Maps/Zillow listing search. It is a thin, read-only FastAPI app over vendor-shaped SQLite tables that **leadgen writes whenever it generates a queue** (`crm_accounts`, `kyc_scores`, `rce_estimates`, `ppc_records`, `geo_risk`, `property_listings`, plus a `vendor_overrides` table for per-lead eval scenarios). No real external system is ever called.
+
+**Why:** Gives the agent realistic fetch/lookup tools without exposing the ground truth: the agent only sees vendor responses (404 = no record, 503 = unavailable, listing search returns evidence TEXT for an interpreter to read), while the answer key (`clean_fields`) stays DEBUG-gated and eval-only.
+
+**Files:** `vendors/` (service, Dockerfile, requirements), `leadgen/vendor_data.py` (tables + writers), `shared/vendor_evidence.py` (evidence templates), `leadgen/main.py` (creates tables, writes rows on `POST /queue`, clears them on `/reset`), `docker-compose.yml` (new service, `./data` mounted read-only), `.env.example` (`VENDOR_PROFILE=demo|noisy`, `VENDOR_SEED`).
+
+**Profiles:** `demo` is reliable (a feature that exists is found; absence reads as "nothing seen"); `noisy` adds seeded unavailable / ambiguous / missed results. Per-lead overrides (unavailable | not_found | ambiguous, per vendor or field) come from `vendor_overrides` for hand-built eval cases.

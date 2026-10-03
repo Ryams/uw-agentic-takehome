@@ -26,8 +26,8 @@ Legend: **[core]** needed for the core loop, **[next]** if time allows, **[hit l
 - [hit list] Remaining ~6 protocols, UW-editable protocol authoring
 
 ## Tools / integrations (mostly stubbed)
-- [core] Data-fetch stubs for system-owned fields (protection class, replacement cost, roof class, etc.), reading from clean data
-- [core] Lookup stub for "check Google Maps / Zillow, else assume no" (returns found / not found / ambiguous)
+- [core] Mock vendors service (CRM, KYC, RCE, PPC, geo risk) + thin fetch clients; vendor tables written by leadgen (D19)
+- [core] Mock Maps/Zillow listing search returning evidence text (found / not found / ambiguous / unavailable) + thin lookup client (D19)
 - [hit list] Real integrations: satellite imagery, property data providers, KYC, fire-dept/PC lookup
 
 ## Agent / LLM

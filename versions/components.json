@@ -22,16 +22,17 @@
     "version": 0
   },
   "leadgen_generator": {
-    "content_hash": "dd72a9493e8d",
+    "content_hash": "8f88aa919d40",
     "files": [
       "sim-harness/leadgen/__init__.py",
       "sim-harness/leadgen/archetypes.py",
       "sim-harness/leadgen/generator.py",
       "sim-harness/leadgen/generator_config.yaml",
       "sim-harness/leadgen/main.py",
+      "sim-harness/leadgen/vendor_data.py",
       "sim-harness/shared/schema.py"
     ],
-    "version": 0
+    "version": 1
   },
   "llm_client": {
     "content_hash": "empty",
@@ -39,8 +40,23 @@
     "version": 0
   },
   "lookup_tools": {
-    "content_hash": "empty",
-    "files": [],
+    "content_hash": "bf340ce5e386",
+    "files": [
+      "uw_agent/tools/__init__.py",
+      "uw_agent/tools/base.py",
+      "uw_agent/tools/fetch.py",
+      "uw_agent/tools/lookup.py"
+    ],
+    "version": 1
+  },
+  "mock_vendors": {
+    "content_hash": "d398d19fea65",
+    "files": [
+      "sim-harness/leadgen/vendor_data.py",
+      "sim-harness/shared/vendor_evidence.py",
+      "sim-harness/vendors/__init__.py",
+      "sim-harness/vendors/main.py"
+    ],
     "version": 0
   },
   "normalizer": {
@@ -51,9 +67,12 @@
     "version": 1
   },
   "orchestrator": {
-    "content_hash": "empty",
-    "files": [],
-    "version": 0
+    "content_hash": "a399e2e000b7",
+    "files": [
+      "uw_agent/harness.py",
+      "uw_agent/intake.py"
+    ],
+    "version": 1
   },
   "protocol:general_plumbing": {
     "content_hash": "19d8c2fae7e9",

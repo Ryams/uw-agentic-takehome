@@ -42,7 +42,9 @@ STATIC_COMPONENTS: dict[str, list[str]] = {
     "evidence_interpreter": ["uw_agent/interpreter.py", "uw_agent/prompts/interpreter*.md"],
     "email_composer": ["uw_agent/composer.py", "uw_agent/prompts/composer*.md"],
     "summarizer": ["uw_agent/summarizer.py", "uw_agent/prompts/summar*.md"],
-    "orchestrator": ["uw_agent/orchestrator.py"],
+    "orchestrator": ["uw_agent/orchestrator.py", "uw_agent/intake.py", "uw_agent/harness.py"],
+    "mock_vendors": ["sim-harness/vendors/*.py", "sim-harness/shared/vendor_evidence.py",
+                     "sim-harness/leadgen/vendor_data.py"],
     "grader": ["evals/grader.py"],
     # Eval set: the (modified) lead generator determines what a seed means.
     "leadgen_generator": [

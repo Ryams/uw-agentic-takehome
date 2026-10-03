@@ -25,6 +25,7 @@ class Settings:
     anthropic_model: str
     leadgen_url: str
     mailbox_url: str
+    vendors_url: str
 
     @property
     def anthropic_api_key(self) -> str:
@@ -42,4 +43,5 @@ def get_settings() -> Settings:
         anthropic_model=os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5-5"),
         leadgen_url=os.environ.get("LEADGEN_URL", "http://localhost:8081").rstrip("/"),
         mailbox_url=os.environ.get("MAILBOX_URL", "http://localhost:8025").rstrip("/"),
+        vendors_url=os.environ.get("VENDORS_URL", "http://localhost:8082").rstrip("/"),
     )

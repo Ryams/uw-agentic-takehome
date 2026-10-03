@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 from shared import registry
 from shared.schema import LeadDebug, LeadSummary, Perturbation, QueueResponse
 
-from . import generator
+from . import generator, vendor_data
 
 CONFIG_PATH = Path(__file__).with_name("generator_config.yaml")
 DB_PATH = Path(os.environ.get("LEADGEN_DB", "/data/leadgen.db"))
@@ -59,6 +59,7 @@ def _init_db() -> None:
             )
             """
         )
+        vendor_data.create_vendor_tables(conn)  # D19: vendor-shaped tables read by the `vendors` service
 
 
 _init_db()  # idempotent; ensures the table exists regardless of lifespan timing
@@ -95,6 +96,10 @@ def post_queue(
     # Replace any prior queue so GET /leads reflects exactly this run.
     with _connect() as conn:
         conn.execute("DELETE FROM leads")
+        vendor_data.clear_vendor_rows(conn)
+        conn.execute("DELETE FROM vendor_overrides")
+        for ld in leads:  # ground truth -> vendor tables (the agent only ever sees vendor responses)
+            vendor_data.write_vendor_rows(conn, ld["lead_id"], ld["debug"]["clean_fields"], seed)
         conn.executemany(
             """INSERT INTO leads
                (lead_id, seed, idx, received_at, source, difficulty, fields_json, debug_json)
@@ -194,4 +199,6 @@ def metrics() -> dict[str, Any]:
 def reset() -> dict[str, str]:
     with _connect() as conn:
         conn.execute("DELETE FROM leads")
+        vendor_data.clear_vendor_rows(conn)
+        conn.execute("DELETE FROM vendor_overrides")
     return {"status": "cleared"}
