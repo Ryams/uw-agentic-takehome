@@ -1,12 +1,10 @@
 # Stand UW Agentic Assistant (proof of concept)
 
-An assistant for the start of an underwriter's day. It takes a queue of messy property leads, checks each one against the encoded UW playbook, resolves what it can on its own, and drives every lead to one of two clean states: **ready to quote**, or **one consolidated follow-up email** to the producer. The underwriter stays in control: every proposed decision, assumption, draft and escalation is visible and overridable.
+An assistant for the start of an underwriter's day.
 
 - **Playbook as data.** Five FigJam diagrams (six protocols: pools, general plumbing, water heaters, roof class, siding, trusts and LLCs) are encoded as JSON decision trees. A deterministic engine walks them. The model never decides a protocol outcome.
 - **Models at the edges only.** Claude reads evidence text, words the follow-up questions, parses free-text replies and writes the underwriter summary. Code validates everything it returns, and every edge has a deterministic fallback.
 - **Evals first-class.** 83 graded leads (40 seeded, 43 hand-built fixed cases), metrics per slice, every run stamped with the code version and the run settings.
-
-> **Honest status.** All 109 tests pass and the full loop runs end to end. The Claude-backed edges have only been exercised through an offline rule-based stand-in and scripted fakes: **no run with a real API key has happened yet** (`make smoke-llm` and `make eval` are the first things to do with a key). The web UI is tested through its API and render checks but **has not been looked at in a browser by me**. Both are called out again under [Limits](#limits-and-what-is-not-verified).
 
 ---
 
